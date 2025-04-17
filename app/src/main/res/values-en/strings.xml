@@ -92,5 +92,6 @@
     <string name="registration_success_login_failed">Registration successful, but login failed</string>
 
     <string name="full_name">full name</string>
+    <string name="login_failed">login failed</string>
 
 </resources>
