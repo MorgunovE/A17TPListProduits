@@ -126,7 +126,7 @@ public class AddProductActivity extends AppCompatActivity {
 
         // Envoyer la requête API
         try {
-            ApiClient.ApiResponse<Product> response = apiClient.createProduct(nouveauProduit).get();
+            ApiClient.ApiResponse<String> response = apiClient.createProduct(nouveauProduit).get();
 
             if (response.isSuccess() && response.getData() != null) {
                 String produitCree = response.getData();
