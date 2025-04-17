@@ -1,28 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">A17TPListProduits</string>
+    <string name="app_name">Liste de Courses</string>
 
     <!-- Auth strings -->
     <string name="login_title">Connexion</string>
     <string name="username_hint">Nom d\'utilisateur</string>
     <string name="password_hint">Mot de passe</string>
     <string name="login_button">Se connecter</string>
-    <string name="register_prompt">Pas de compte? S\'inscrire ici</string>
+    <string name="register_prompt">Pas de compte? Inscrivez-vous ici</string>
     <string name="register_title">Inscription</string>
-    <string name="email_hint">Email</string>
-    <string name="confirm_password_hint">Confirmer le mot de passe</string>
+    <string name="email_hint">Courriel</string>
+    <string name="confirm_password_hint">Confirmez le mot de passe</string>
     <string name="register_button">S\'inscrire</string>
-    <string name="login_prompt">Déjà un compte? Se connecter ici</string>
+    <string name="login_prompt">Déjà un compte? Connectez-vous ici</string>
+    <string name="logout">Déconnexion</string>
 
     <!-- Main app strings -->
-    <string name="product_lists">Mes listes</string>
+    <string name="product_lists">Mes Listes</string>
     <string name="add_list">Ajouter une liste</string>
     <string name="no_lists">Aucune liste trouvée</string>
     <string name="error_loading_lists">Erreur lors du chargement des listes</string>
     <string name="list_name">Nom de la liste</string>
-    <string name="list_description">Description (optionnel)</string>
-    <string name="create_list">Créer la liste</string>
+    <string name="list_description">Description (optionnelle)</string>
+    <string name="create_list">Créer une liste</string>
     <string name="list_copy">Copie de %1$s</string>
     <string name="copy_list">Copier la liste</string>
+    <string name="list_copied_success">Liste copiée avec succès</string>
+    <string name="error_copying_list">Erreur lors de la copie de la liste</string>
+    <string name="product_count">Produits:</string>
 
     <!-- Product strings -->
     <string name="product_name">Nom du produit</string>
@@ -33,4 +38,9 @@
     <string name="add_product">Ajouter un produit</string>
     <string name="search_products">Rechercher des produits</string>
     <string name="product_details">Détails du produit</string>
+    <string name="no_products">Aucun produit dans cette liste</string>
+    <string name="error_loading_list">Erreur lors du chargement de la liste</string>
+    <string name="add_product_to_list">Ajouter à la liste</string>
+    <string name="product_added_success">Produit ajouté avec succès</string>
+    <string name="error_adding_product">Erreur lors de l\'ajout du produit</string>
 </resources>
