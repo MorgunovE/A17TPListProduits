@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Dictionary;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -421,6 +422,9 @@ public class ApiClient {
     }
 
     public List<Object> searchProducts(String query) {
+    }
+
+    public Dictionary<Object, Object> createProduct(Product nouveauProduit) {
     }
 
     // Classe pour la réponse d'authentification
