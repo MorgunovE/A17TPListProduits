@@ -80,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Tenter la connexion
         try {
-            ApiClient.ApiResponse<String> response = apiClient.login(username, password).get();
+            ApiClient.ApiResponse<Boolean> response = apiClient.login(username, password).get();
 
             if (response.isSuccess()) {
                 // Enregistrer les données de session
