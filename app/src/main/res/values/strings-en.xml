@@ -28,6 +28,15 @@
     <string name="list_created_success">List created successfully</string>
     <string name="list_creation_error">Error creating list</string>
     <string name="network_error">Network error</string>
+    <!-- Additional strings needed -->
+    <string name="list_not_found">List not found</string>
+    <string name="list_copied_success">List copied successfully</string>
+    <string name="copy">Copy</string>
+    <string name="products">Products</string>
+    <string name="empty_product_list">This list has no products yet</string>
+    <string name="logout">Logout</string>
+    <string name="product_count">Products:</string>
+    <string name="no_products_found">No products found</string>
 
     <!-- Product strings -->
     <string name="product_name">Product name</string>
