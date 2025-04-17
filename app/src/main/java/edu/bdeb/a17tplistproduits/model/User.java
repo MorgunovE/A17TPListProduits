@@ -5,12 +5,18 @@ public class User {
     private String username;
     private String email;
     private String token;
+    private String password;
 
-    public User(String id, String username, String email, String token) {
+    public User(String id, String username, String email, String token, String password) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.token = token;
+        this.password = password;
+    }
+
+    public User() {
+
     }
 
     // Getters and setters
@@ -22,4 +28,16 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
+
+    public void setName(String name) {
+        this.username = name;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }
