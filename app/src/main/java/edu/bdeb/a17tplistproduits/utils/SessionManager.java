@@ -138,7 +138,7 @@ public class SessionManager {
 
     public void saveToken(String token) {
         SharedPreferences.Editor editor = pref.edit();
-        editor.putString("token", token);
+        editor.putString(KEY_AUTH_TOKEN, token);
         editor.apply();
     }
 
