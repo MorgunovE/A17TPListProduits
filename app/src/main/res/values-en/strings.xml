@@ -83,4 +83,13 @@
     <string name="confirm_password">Confirm password</string>
     <string name="already_have_account">Already have an account? Log in</string>
 
+    <string name="name_required">Name is required</string>
+    <string name="email_required">Email is required</string>
+    <string name="password_required">Password is required</string>
+    <string name="confirm_password_required">Password confirmation is required</string>
+    <string name="password_mismatch">Passwords do not match</string>
+    <string name="registration_failed">Registration failed</string>
+    <string name="registration_success_login_failed">Registration successful, but login failed</string>
+
+
 </resources>
