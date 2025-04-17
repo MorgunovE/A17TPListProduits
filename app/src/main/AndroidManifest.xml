@@ -49,6 +49,18 @@
         <activity
             android:name=".ui.lists.AddListActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.lists.ListsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.lists.ListDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.products.ProductsActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
