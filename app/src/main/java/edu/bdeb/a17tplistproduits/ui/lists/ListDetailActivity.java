@@ -1,7 +1,9 @@
 package edu.bdeb.a17tplistproduits.ui.lists;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -9,8 +11,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,93 +30,100 @@ import edu.bdeb.a17tplistproduits.api.ApiClient;
 import edu.bdeb.a17tplistproduits.model.Product;
 import edu.bdeb.a17tplistproduits.model.ProductList;
 import edu.bdeb.a17tplistproduits.ui.products.ProductDetailActivity;
-import edu.bdeb.a17tplistproduits.ui.products.ProductSearchActivity;
+import edu.bdeb.a17tplistproduits.ui.products.ProductsActivity;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class ListDetailActivity extends AppCompatActivity implements ProductAdapter.OnProductClickListener {
 
-    private static final int REQUEST_PRODUCT_SEARCH = 100;
-    private static final String EXTRA_LIST_ID = "list_id";
-    private static final String EXTRA_PRODUCT_ID = "product_id";
+    private static final int REQUEST_ADD_PRODUCT = 100;
 
-    private ApiClient apiClient;
     private String listId;
     private ProductList currentList;
 
     private TextView textViewListName;
     private TextView textViewListDescription;
     private RecyclerView recyclerViewProducts;
-    private FloatingActionButton fabAddProduct;
+    private TextView textViewEmptyList;
     private ProgressBar progressBar;
+    private Button buttonCopyList;
+    private FloatingActionButton fabAddProduct;
 
-    private ProductAdapter adapter;
+    private ProductAdapter productAdapter;
     private List<Product> productList = new ArrayList<>();
+
+    private ApiClient apiClient;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list_detail);
 
+        // Initialiser les vues
+        initializeViews();
+
+        // Initialiser les données
+        sessionManager = new SessionManager(this);
+        apiClient = new ApiClient(sessionManager);
+
         // Récupérer l'ID de la liste depuis l'intent
-        listId = getIntent().getStringExtra(EXTRA_LIST_ID);
+        listId = getIntent().getStringExtra("list_id");
         if (listId == null) {
             Toast.makeText(this, R.string.error_loading_list, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // Initialisation
-        apiClient = new ApiClient(new SessionManager(this));
-        initViews();
-        setupRecyclerView();
+        // Configurer le RecyclerView
+        recyclerViewProducts.setLayoutManager(new LinearLayoutManager(this));
+        productAdapter = new ProductAdapter(productList, this);
+        recyclerViewProducts.setAdapter(productAdapter);
 
         // Charger les détails de la liste
         loadListDetails();
 
-        // Configurer les listeners
-        fabAddProduct.setOnClickListener(v -> openProductSearch());
+        // Configurer le bouton d'ajout de produit
+        fabAddProduct.setOnClickListener(v -> {
+            Intent intent = new Intent(ListDetailActivity.this, ProductsActivity.class);
+            intent.putExtra("list_id", listId);
+            startActivityForResult(intent, REQUEST_ADD_PRODUCT);
+        });
+
+        // Configurer le bouton de copie de liste
+        buttonCopyList.setOnClickListener(v -> showCopyListDialog());
     }
 
-    private void initViews() {
+    private void initializeViews() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle(R.string.list_details);
+
         textViewListName = findViewById(R.id.textViewListName);
         textViewListDescription = findViewById(R.id.textViewListDescription);
         recyclerViewProducts = findViewById(R.id.recyclerViewProducts);
-        fabAddProduct = findViewById(R.id.fabAddProduct);
+        textViewEmptyList = findViewById(R.id.textViewEmptyList);
         progressBar = findViewById(R.id.progressBar);
-
-        // Configuration de la toolbar
-        setSupportActionBar(findViewById(R.id.toolbar));
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle(R.string.list_detail);
-        }
-    }
-
-    private void setupRecyclerView() {
-        adapter = new ProductAdapter(productList, this);
-        recyclerViewProducts.setLayoutManager(new LinearLayoutManager(this));
-        recyclerViewProducts.setAdapter(adapter);
+        buttonCopyList = findViewById(R.id.buttonCopyList);
+        fabAddProduct = findViewById(R.id.fabAddProduct);
     }
 
     private void loadListDetails() {
-        showLoading(true);
+        progressBar.setVisibility(View.VISIBLE);
         try {
             ApiClient.ApiResponse<ProductList> response = apiClient.getList(listId).get();
-
             if (response.isSuccess()) {
                 currentList = response.getData();
                 updateUI();
             } else {
-                Toast.makeText(this, getString(R.string.error_loading_list) + ": " +
-                        response.getErrorMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, response.getErrorMessage(), Toast.LENGTH_SHORT).show();
                 finish();
             }
         } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(this, getString(R.string.network_error) + ": " +
-                    e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Erreur : " + e.getMessage(), Toast.LENGTH_SHORT).show();
             finish();
         } finally {
-            showLoading(false);
+            progressBar.setVisibility(View.GONE);
         }
     }
 
@@ -127,133 +138,87 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
                 textViewListDescription.setVisibility(View.GONE);
             }
 
-            // Mettre à jour la liste des produits
             productList.clear();
-            if (currentList.getProduits() != null) {
+            if (currentList.getProduits() != null && !currentList.getProduits().isEmpty()) {
                 productList.addAll(currentList.getProduits());
-            }
-            adapter.notifyDataSetChanged();
-
-            // Afficher un message si la liste est vide
-            findViewById(R.id.textViewEmptyList).setVisibility(
-                    productList.isEmpty() ? View.VISIBLE : View.GONE);
-        }
-    }
-
-    private void openProductSearch() {
-        Intent intent = new Intent(this, ProductSearchActivity.class);
-        startActivityForResult(intent, REQUEST_PRODUCT_SEARCH);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_PRODUCT_SEARCH && resultCode == RESULT_OK && data != null) {
-            String productId = data.getStringExtra(EXTRA_PRODUCT_ID);
-            if (productId != null) {
-                showQuantityDialog(productId);
-            }
-        }
-    }
-
-    private void showQuantityDialog(String productId) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View view = getLayoutInflater().inflate(R.layout.dialog_product_quantity, null);
-        EditText editTextQuantity = view.findViewById(R.id.editTextQuantity);
-
-        builder.setTitle(R.string.enter_quantity)
-               .setView(view)
-               .setPositiveButton(R.string.add, (dialog, which) -> {
-                   String quantityStr = editTextQuantity.getText().toString();
-                   if (!quantityStr.isEmpty()) {
-                       double quantity = Double.parseDouble(quantityStr);
-                       addProductToList(productId, quantity);
-                   }
-               })
-               .setNegativeButton(R.string.cancel, null)
-               .show();
-    }
-
-    private void addProductToList(String productId, double quantity) {
-        showLoading(true);
-        try {
-            ApiClient.ApiResponse<ProductList> response = apiClient.addProductToList(listId, productId, quantity).get();
-
-            if (response.isSuccess()) {
-                currentList = response.getData();
-                updateUI();
-                Toast.makeText(this, R.string.product_added_to_list, Toast.LENGTH_SHORT).show();
+                recyclerViewProducts.setVisibility(View.VISIBLE);
+                textViewEmptyList.setVisibility(View.GONE);
             } else {
-                Toast.makeText(this, getString(R.string.error_adding_product) + ": " +
-                        response.getErrorMessage(), Toast.LENGTH_LONG).show();
+                recyclerViewProducts.setVisibility(View.GONE);
+                textViewEmptyList.setVisibility(View.VISIBLE);
             }
-        } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(this, getString(R.string.network_error) + ": " +
-                    e.getMessage(), Toast.LENGTH_LONG).show();
-        } finally {
-            showLoading(false);
+            productAdapter.notifyDataSetChanged();
         }
     }
 
-    public void copyList(View view) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    private void showCopyListDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_copy_list, null);
         EditText editTextListName = dialogView.findViewById(R.id.editTextListName);
 
-        // Suggérer un nom par défaut
-        editTextListName.setText(getString(R.string.list_copy, currentList.getNom()));
+        // Proposer un nom par défaut
+        String newName = getString(R.string.list_copy, currentList.getNom());
+        editTextListName.setText(newName);
 
-        builder.setTitle(R.string.copy_list)
-               .setView(dialogView)
-               .setPositiveButton(R.string.copy, (dialog, which) -> {
-                   String newName = editTextListName.getText().toString();
-                   if (!newName.isEmpty()) {
-                       performCopyList(newName);
-                   }
-               })
-               .setNegativeButton(R.string.cancel, null)
-               .show();
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.copy_list)
+            .setView(dialogView)
+            .setPositiveButton(R.string.copy, (dialog, which) -> {
+                String name = editTextListName.getText().toString().trim();
+                if (!name.isEmpty()) {
+                    copyList(name);
+                } else {
+                    Toast.makeText(ListDetailActivity.this,
+                        R.string.error_empty_name, Toast.LENGTH_SHORT).show();
+                }
+            })
+            .setNegativeButton(R.string.cancel, null)
+            .show();
     }
 
-    private void performCopyList(String newName) {
-        showLoading(true);
+    private void copyList(String newName) {
+        progressBar.setVisibility(View.VISIBLE);
         try {
             ApiClient.ApiResponse<ProductList> response = apiClient.copyList(listId, newName).get();
-
             if (response.isSuccess()) {
                 Toast.makeText(this, R.string.list_copied, Toast.LENGTH_SHORT).show();
 
-                // Ouvrir la nouvelle liste copiée
-                Intent intent = new Intent(this, ListDetailActivity.class);
-                intent.putExtra(EXTRA_LIST_ID, response.getData().getId());
+                // Ouvrir la nouvelle liste
+                Intent intent = new Intent(ListDetailActivity.this, ListDetailActivity.class);
+                intent.putExtra("list_id", response.getData().getId());
                 startActivity(intent);
+                finish();
             } else {
-                Toast.makeText(this, getString(R.string.error_copying_list) + ": " +
-                        response.getErrorMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, response.getErrorMessage(), Toast.LENGTH_SHORT).show();
             }
         } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(this, getString(R.string.network_error) + ": " +
-                    e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Erreur : " + e.getMessage(), Toast.LENGTH_SHORT).show();
         } finally {
-            showLoading(false);
+            progressBar.setVisibility(View.GONE);
         }
     }
 
     @Override
     public void onProductClick(Product product) {
         Intent intent = new Intent(this, ProductDetailActivity.class);
-        intent.putExtra(EXTRA_PRODUCT_ID, product.getId());
+        intent.putExtra("product_id", product.getId());
         startActivity(intent);
     }
 
-    private void showLoading(boolean isLoading) {
-        progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_ADD_PRODUCT && resultCode == RESULT_OK) {
+            // Recharger la liste après l'ajout d'un produit
+            loadListDetails();
+        }
     }
 
     @Override
-    public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return true;
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
