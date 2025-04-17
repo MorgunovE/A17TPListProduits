@@ -90,5 +90,7 @@
     <string name="registration_failed">Échec de l\'inscription</string>
     <string name="registration_success_login_failed">Inscription réussie, mais échec de la connexion</string>
 
+    <string name="full_name">full name</string>
+
 
 </resources>
