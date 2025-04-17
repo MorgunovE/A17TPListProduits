@@ -183,41 +183,66 @@ public class ApiClient {
     }
 
 
-    public CompletableFuture<ApiResponse<Boolean>> register(String username, String password, String email) {
-        CompletableFuture<ApiResponse<Boolean>> future = new CompletableFuture<>();
+    public Future<ApiResponse<String>> register(String username, String password, String email) {
+        FutureTask<ApiResponse<String>> future = new FutureTask<>(() -> {
+            ApiResponse<String> result = new ApiResponse<>();
+            try {
+                // Create request body with registration details
+                JSONObject jsonBody = new JSONObject();
+                jsonBody.put("username", username);
+                jsonBody.put("password", password);
+                jsonBody.put("email", email);
 
-        new AsyncTask<Void, Void, ApiResponse<Boolean>>() {
-            @Override
-            protected ApiResponse<Boolean> doInBackground(Void... voids) {
-                try {
-                    JSONObject jsonBody = new JSONObject();
-                    jsonBody.put("username", username);
-                    jsonBody.put("password", password);
-                    jsonBody.put("email", email);
+                URL url = new URL(BASE_URL + "/inscription");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                // Setup connection
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
 
-                    String jsonResponse = performRequest(BASE_URL + "/inscription", "POST",
-                            jsonBody.toString(), null);
-                    JSONObject response = new JSONObject(jsonResponse);
-
-                    if (response.has("message") && response.getString("message").contains("réussie")) {
-                        return new ApiResponse<>(true);
-                    } else if (response.has("erreur")) {
-                        return new ApiResponse<>(response.getString("erreur"));
-                    } else {
-                        return new ApiResponse<>("Unknown error occurred");
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Registration error", e);
-                    return new ApiResponse<>(e.getMessage());
+                // Write request body
+                try (OutputStream os = connection.getOutputStream()) {
+                    byte[] input = jsonBody.toString().getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
                 }
-            }
 
-            @Override
-            protected void onPostExecute(ApiResponse<Boolean> result) {
-                future.complete(result);
-            }
-        }.execute();
+                int responseCode = connection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
+                    // Read successful response
+                    String response = readInputStream(connection.getInputStream());
+                    Log.d(TAG, "Registration raw response: " + response);
 
+                    // Check if response contains token or success message
+                    if (response.contains("token") || response.startsWith("eyJ")) {
+                        // If server returns token immediately after registration
+                        result.setSuccess(true);
+                        result.setData(response);
+                        Log.d(TAG, "Registration successful");
+                    } else {
+                        // Just a success message
+                        result.setSuccess(true);
+                        result.setData("Registration successful");
+                    }
+                } else {
+                    // Handle error response
+                    String errorResponse = readInputStream(connection.getErrorStream());
+                    Log.e(TAG, "Registration failed with code: " + responseCode + ", response: " + errorResponse);
+                    result.setSuccess(false);
+                    result.setErrorMessage(errorResponse);
+                }
+                connection.disconnect();
+            } catch (Exception e) {
+                Log.e(TAG, "Exception during registration: " + e.getMessage());
+                result.setSuccess(false);
+                result.setErrorMessage(e.getMessage());
+            }
+            Log.d(TAG, "Registration completed, success: " + result.isSuccess() +
+                  ", has data: " + (result.getData() != null) +
+                  (result.isSuccess() ? "" : ", error: " + result.getErrorMessage()));
+            return result;
+        });
+
+        executorService.submit(future);
         return future;
     }
 
