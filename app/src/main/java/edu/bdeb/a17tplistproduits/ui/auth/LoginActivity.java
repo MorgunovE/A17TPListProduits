@@ -13,13 +13,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.concurrent.ExecutionException;
 
-import edu.bdeb.a17tplistproduits.MainActivity;
 import edu.bdeb.a17tplistproduits.R;
 import edu.bdeb.a17tplistproduits.api.ApiClient;
+import edu.bdeb.a17tplistproduits.ui.lists.ListsActivity;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class LoginActivity extends AppCompatActivity {
-    private EditText editTextUsername;
+    private EditText editTextEmail;
     private EditText editTextPassword;
     private Button buttonLogin;
     private TextView textViewRegister;
@@ -36,15 +36,8 @@ public class LoginActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Si déjà connecté, aller directement au MainActivity
-        if (sessionManager.isLoggedIn()) {
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-            finish();
-            return;
-        }
-
         // Initialisation des vues
-        editTextUsername = findViewById(R.id.editTextUsername);
+        editTextEmail = findViewById(R.id.editTextUsername);
         editTextPassword = findViewById(R.id.editTextPassword);
         buttonLogin = findViewById(R.id.buttonLogin);
         textViewRegister = findViewById(R.id.textViewRegister);
@@ -58,13 +51,13 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void effectuerConnexion() {
-        String username = editTextUsername.getText().toString().trim();
+        String email = editTextEmail.getText().toString().trim();
         String password = editTextPassword.getText().toString().trim();
 
         // Validation des entrées
-        if (username.isEmpty()) {
-            editTextUsername.setError("Nom d'utilisateur requis");
-            editTextUsername.requestFocus();
+        if (email.isEmpty()) {
+            editTextEmail.setError("Email requis");
+            editTextEmail.requestFocus();
             return;
         }
 
@@ -80,26 +73,23 @@ public class LoginActivity extends AppCompatActivity {
 
         // Tenter la connexion
         try {
-            ApiClient.ApiResponse<Boolean> response = apiClient.login(username, password).get();
+            ApiClient.ApiResponse<String> response = apiClient.login(email, password).get();
 
             if (response.isSuccess()) {
-                // Enregistrer les données de session
-                sessionManager.saveToken(response.getData());
-                sessionManager.saveUsername(username);
-                sessionManager.setLoggedIn(true);
-
-                // Naviguer vers l'écran principal
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                // Connexion réussie, navigation vers l'écran principal
+                Intent intent = new Intent(LoginActivity.this, ListsActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
                 finish();
             } else {
                 Toast.makeText(LoginActivity.this,
-                    "Échec de connexion: " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
+                        "Échec de la connexion: " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(LoginActivity.this,
-                "Erreur de connexion: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
+                    "Erreur lors de la connexion: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         } finally {
             progressBar.setVisibility(View.GONE);
             buttonLogin.setEnabled(true);
