@@ -23,22 +23,20 @@ import java.util.concurrent.ExecutionException;
 import edu.bdeb.a17tplistproduits.adapters.ProductListAdapter;
 import edu.bdeb.a17tplistproduits.api.ApiClient;
 import edu.bdeb.a17tplistproduits.model.ProductList;
-import edu.bdeb.a17tplistproduits.ui.auth.LoginActivity;
 import edu.bdeb.a17tplistproduits.ui.lists.AddListActivity;
 import edu.bdeb.a17tplistproduits.ui.lists.ListDetailActivity;
+import edu.bdeb.a17tplistproduits.ui.auth.LoginActivity;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class MainActivity extends AppCompatActivity implements ProductListAdapter.OnListClickListener {
 
     private RecyclerView recyclerView;
     private ProductListAdapter adapter;
+    private List<ProductList> productLists;
     private ProgressBar progressBar;
     private TextView textViewNoLists;
-    private FloatingActionButton fabAddList;
-
     private ApiClient apiClient;
     private SessionManager sessionManager;
-    private List<ProductList> productLists = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements ProductListAdapte
         setContentView(R.layout.activity_main);
 
         sessionManager = new SessionManager(this);
+        apiClient = new ApiClient(sessionManager);
 
         // Vérifier si l'utilisateur est connecté
         if (!sessionManager.isLoggedIn()) {
@@ -54,17 +53,18 @@ public class MainActivity extends AppCompatActivity implements ProductListAdapte
             return;
         }
 
-        apiClient = new ApiClient(sessionManager);
+        setTitle(R.string.product_lists);
 
         // Initialiser les vues
         recyclerView = findViewById(R.id.recyclerViewLists);
         progressBar = findViewById(R.id.progressBar);
         textViewNoLists = findViewById(R.id.textViewNoLists);
-        fabAddList = findViewById(R.id.fabAddList);
+        FloatingActionButton fabAddList = findViewById(R.id.fabAddList);
 
-        // Configurer le RecyclerView
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        // Configurer RecyclerView
+        productLists = new ArrayList<>();
         adapter = new ProductListAdapter(productLists, this);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
         // Configurer le bouton d'ajout
@@ -73,103 +73,44 @@ public class MainActivity extends AppCompatActivity implements ProductListAdapte
             startActivity(intent);
         });
 
-        // Définir le titre avec le nom d'utilisateur
-        String username = sessionManager.getUsername();
-        if (username != null) {
-            setTitle(getString(R.string.product_lists) + " - " + username);
-        }
-
-        // Charger les listes de l'utilisateur
-        loadProductLists();
+        // Charger les listes
+        loadLists();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Recharger les listes à chaque reprise de l'activité
-        loadProductLists();
+        if (sessionManager.isLoggedIn()) {
+            loadLists();
+        }
     }
 
-    private void loadProductLists() {
+    private void loadLists() {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
         textViewNoLists.setVisibility(View.GONE);
 
         try {
-            apiClient.getLists().thenAccept(response -> {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-
-                    if (response.isSuccess()) {
-                        productLists.clear();
-                        List<ProductList> lists = response.getData();
-
-                        if (lists != null && !lists.isEmpty()) {
-                            productLists.addAll(lists);
-                            adapter.notifyDataSetChanged();
-                            recyclerView.setVisibility(View.VISIBLE);
-                        } else {
-                            textViewNoLists.setVisibility(View.VISIBLE);
-                        }
-                    } else {
-                        textViewNoLists.setVisibility(View.VISIBLE);
-                        Toast.makeText(this, "Erreur lors du chargement des listes: " +
-                                response.getErrorMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
-            }).exceptionally(e -> {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
+            ApiClient.ApiResponse<List<ProductList>> response = apiClient.getLists().get();
+            if (response.isSuccess()) {
+                List<ProductList> lists = response.getData();
+                if (lists != null && !lists.isEmpty()) {
+                    productLists.clear();
+                    productLists.addAll(lists);
+                    adapter.notifyDataSetChanged();
+                    recyclerView.setVisibility(View.VISIBLE);
+                } else {
                     textViewNoLists.setVisibility(View.VISIBLE);
-                    Toast.makeText(this, "Erreur réseau: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                });
-                return null;
-            });
-        } catch (Exception e) {
-            progressBar.setVisibility(View.GONE);
+                }
+            } else {
+                textViewNoLists.setVisibility(View.VISIBLE);
+                Toast.makeText(this, getString(R.string.error_loading_lists), Toast.LENGTH_SHORT).show();
+            }
+        } catch (ExecutionException | InterruptedException e) {
             textViewNoLists.setVisibility(View.VISIBLE);
-            Toast.makeText(this, "Erreur: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @Override
-    public void onListClick(ProductList productList) {
-        Intent intent = new Intent(this, ListDetailActivity.class);
-        intent.putExtra("LIST_ID", productList.getId());
-        startActivity(intent);
-    }
-
-    @Override
-    public void onCopyListClick(ProductList productList) {
-        progressBar.setVisibility(View.VISIBLE);
-
-        String newName = getString(R.string.list_copy, productList.getNom());
-
-        try {
-            apiClient.copyList(productList.getId(), newName).thenAccept(response -> {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-
-                    if (response.isSuccess()) {
-                        Toast.makeText(this, "Liste copiée avec succès", Toast.LENGTH_SHORT).show();
-                        loadProductLists();
-                    } else {
-                        Toast.makeText(this, "Erreur lors de la copie: " +
-                                response.getErrorMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
-            }).exceptionally(e -> {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this, "Erreur réseau: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                });
-                return null;
-            });
-        } catch (Exception e) {
+            Toast.makeText(this, getString(R.string.error_loading_lists), Toast.LENGTH_SHORT).show();
+        } finally {
             progressBar.setVisibility(View.GONE);
-            Toast.makeText(this, "Erreur: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -181,15 +122,40 @@ public class MainActivity extends AppCompatActivity implements ProductListAdapte
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_logout) {
+        if (item.getItemId() == R.id.action_logout) {
             sessionManager.logout();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onListClick(ProductList productList) {
+        Intent intent = new Intent(this, ListDetailActivity.class);
+        intent.putExtra("LIST_ID", productList.getId());
+        intent.putExtra("LIST_NAME", productList.getNom());
+        startActivity(intent);
+    }
+
+    @Override
+    public void onCopyListClick(ProductList productList) {
+        progressBar.setVisibility(View.VISIBLE);
+        String newName = getString(R.string.list_copy, productList.getNom());
+
+        try {
+            ApiClient.ApiResponse<ProductList> response = apiClient.copyList(productList.getId(), newName).get();
+            if (response.isSuccess()) {
+                Toast.makeText(this, getString(R.string.list_copied_success), Toast.LENGTH_SHORT).show();
+                loadLists();
+            } else {
+                Toast.makeText(this, getString(R.string.error_copying_list), Toast.LENGTH_SHORT).show();
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            Toast.makeText(this, getString(R.string.error_copying_list), Toast.LENGTH_SHORT).show();
+        } finally {
+            progressBar.setVisibility(View.GONE);
+        }
     }
 }
