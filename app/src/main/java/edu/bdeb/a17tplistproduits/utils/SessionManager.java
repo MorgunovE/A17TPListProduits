@@ -136,9 +136,9 @@ public class SessionManager {
         editor.apply();
     }
 
-    public void saveToken(Boolean data) {
+    public void saveToken(String token) {
         SharedPreferences.Editor editor = pref.edit();
-        editor.putBoolean(KEY_AUTH_TOKEN, data);
+        editor.putString("token", token);
         editor.apply();
     }
 
@@ -150,5 +150,11 @@ public class SessionManager {
 
     public String getToken() {
         return pref.getString(KEY_AUTH_TOKEN, null);
+    }
+
+    public void saveEmail(String email) {
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(KEY_EMAIL, email);
+        editor.apply();
     }
 }
