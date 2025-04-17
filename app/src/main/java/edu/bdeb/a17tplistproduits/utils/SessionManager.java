@@ -147,4 +147,8 @@ public class SessionManager {
         editor.putBoolean(KEY_IS_LOGGED_IN, b);
         editor.apply();
     }
+
+    public String getToken() {
+        return pref.getString(KEY_AUTH_TOKEN, null);
+    }
 }
