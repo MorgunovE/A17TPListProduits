@@ -92,6 +92,7 @@
 
     <string name="full_name">full name</string>
     <string name="login_failed">login failed</string>
+    <string name="password_length">password_length</string>
 
 
 </resources>
