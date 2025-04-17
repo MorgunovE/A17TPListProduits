@@ -24,6 +24,10 @@
     <string name="create_list">Create List</string>
     <string name="list_copy">Copy of %1$s</string>
     <string name="copy_list">Copy List</string>
+    <string name="list_name_required">List name is required</string>
+    <string name="list_created_success">List created successfully</string>
+    <string name="list_creation_error">Error creating list</string>
+    <string name="network_error">Network error</string>
 
     <!-- Product strings -->
     <string name="product_name">Product name</string>
