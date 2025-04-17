@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 import edu.bdeb.a17tplistproduits.model.Product;
 import edu.bdeb.a17tplistproduits.model.ProductList;
+import edu.bdeb.a17tplistproduits.model.User;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class ApiClient {
