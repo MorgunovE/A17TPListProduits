@@ -1,7 +1,6 @@
 package edu.bdeb.a17tplistproduits.ui.products;
 
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -50,11 +49,11 @@ public class ProductDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_detail);
 
-        // Initialiser les services
+        // Initialize services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Initialiser la toolbar
+        // Initialize toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -62,7 +61,7 @@ public class ProductDetailActivity extends AppCompatActivity {
             getSupportActionBar().setTitle(R.string.product_details);
         }
 
-        // Initialiser les vues
+        // Initialize views
         textViewProductName = findViewById(R.id.textViewProductName);
         textViewProductQuantity = findViewById(R.id.textViewProductQuantity);
         textViewProductUnit = findViewById(R.id.textViewProductUnit);
@@ -71,20 +70,20 @@ public class ProductDetailActivity extends AppCompatActivity {
         buttonAddToList = findViewById(R.id.buttonAddToList);
         progressBar = findViewById(R.id.progressBar);
 
-        // Récupérer l'ID du produit
+        // Get product ID
         if (getIntent().hasExtra("product_id")) {
             productId = getIntent().getStringExtra("product_id");
-            chargerDetailsProduit();
+            loadProductDetails();
         } else {
             Toast.makeText(this, R.string.product_not_found, Toast.LENGTH_SHORT).show();
             finish();
         }
 
-        // Configurer le bouton d'ajout à une liste
-        buttonAddToList.setOnClickListener(v -> afficherDialogueSelectionListe());
+        // Set button click listener
+        buttonAddToList.setOnClickListener(v -> showListSelectionDialog());
     }
 
-    private void chargerDetailsProduit() {
+    private void loadProductDetails() {
         progressBar.setVisibility(View.VISIBLE);
 
         try {
@@ -92,7 +91,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
             if (response.isSuccess() && response.getData() != null) {
                 currentProduct = response.getData();
-                mettreAJourInterface();
+                updateUI();
             } else {
                 Toast.makeText(this, R.string.product_not_found, Toast.LENGTH_SHORT).show();
                 finish();
@@ -105,7 +104,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void mettreAJourInterface() {
+    private void updateUI() {
         textViewProductName.setText(currentProduct.getNom());
         textViewProductQuantity.setText(String.valueOf(currentProduct.getQuantite()));
         textViewProductUnit.setText(currentProduct.getUnite());
@@ -123,7 +122,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void afficherDialogueSelectionListe() {
+    private void showListSelectionDialog() {
         progressBar.setVisibility(View.VISIBLE);
 
         try {
@@ -131,7 +130,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
             if (response.isSuccess() && response.getData() != null && !response.getData().isEmpty()) {
                 List<ProductList> lists = response.getData();
-                afficherDialogueAvecListes(lists);
+                showListsDialog(lists);
             } else {
                 Toast.makeText(this, "Aucune liste disponible", Toast.LENGTH_SHORT).show();
             }
@@ -142,12 +141,12 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void afficherDialogueAvecListes(List<ProductList> lists) {
-        // Créer la vue pour le dialogue
+    private void showListsDialog(List<ProductList> lists) {
+        // Create dialog view
         View view = getLayoutInflater().inflate(R.layout.dialog_select_list, null);
         Spinner spinnerLists = view.findViewById(R.id.spinnerLists);
 
-        // Adapter pour le spinner
+        // Spinner adapter
         List<String> listNames = new ArrayList<>();
         for (ProductList list : lists) {
             listNames.add(list.getNom());
@@ -158,7 +157,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLists.setAdapter(adapter);
 
-        // Créer et afficher le dialogue
+        // Show dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(R.string.select_list)
                 .setView(view)
@@ -166,7 +165,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                     int position = spinnerLists.getSelectedItemPosition();
                     if (position != -1) {
                         String listId = lists.get(position).getId();
-                        afficherDialogueQuantite(listId);
+                        showQuantityDialog(listId);
                     }
                 })
                 .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
@@ -174,15 +173,15 @@ public class ProductDetailActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void afficherDialogueQuantite(String listId) {
-        // Créer la vue pour le dialogue
+    private void showQuantityDialog(String listId) {
+        // Create dialog view
         View view = getLayoutInflater().inflate(R.layout.dialog_product_quantity, null);
         EditText editTextQuantity = view.findViewById(R.id.editTextQuantity);
 
-        // Préremplir avec la quantité par défaut
+        // Pre-fill with default quantity
         editTextQuantity.setText(String.valueOf(currentProduct.getQuantite()));
 
-        // Créer et afficher le dialogue
+        // Show dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.quantity_for, currentProduct.getNom()))
                 .setView(view)
@@ -191,7 +190,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                     if (!quantityStr.isEmpty()) {
                         try {
                             double quantity = Double.parseDouble(quantityStr);
-                            ajouterProduitAListe(listId, quantity);
+                            addProductToList(listId, quantity);
                         } catch (NumberFormatException e) {
                             Toast.makeText(this, R.string.invalid_quantity, Toast.LENGTH_SHORT).show();
                         }
@@ -204,7 +203,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void ajouterProduitAListe(String listId, double quantity) {
+    private void addProductToList(String listId, double quantity) {
         progressBar.setVisibility(View.VISIBLE);
         buttonAddToList.setEnabled(false);
 
