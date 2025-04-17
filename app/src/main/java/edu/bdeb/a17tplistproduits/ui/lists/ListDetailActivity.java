@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import edu.bdeb.a17tplistproduits.R;
@@ -47,8 +48,9 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
     private FloatingActionButton fabAddProduct;
 
     private String listId;
-    private ProductList productList;
+    private ProductList currentList;
     private ProductAdapter adapter;
+    private List<Product> productList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +66,7 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("");
         }
 
         // Initialiser les vues
@@ -74,47 +77,45 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
         progressBar = findViewById(R.id.progressBar);
         fabAddProduct = findViewById(R.id.fabAddProduct);
 
-        // Configurer le RecyclerView
+        // Configurer RecyclerView
         recyclerViewProducts.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ProductAdapter(new ArrayList<>(), this);
+        productList = new ArrayList<>();
+        adapter = new ProductAdapter(productList, this);
         recyclerViewProducts.setAdapter(adapter);
 
-        // Récupérer l'ID de la liste
+        // Récupérer l'ID de la liste depuis l'intent
         if (getIntent().hasExtra("list_id")) {
             listId = getIntent().getStringExtra("list_id");
-            chargerListeDetails();
+            chargerDetailsDeLaListe();
         } else {
             Toast.makeText(this, R.string.list_not_found, Toast.LENGTH_SHORT).show();
             finish();
         }
 
         // Configurer le FAB
-        fabAddProduct.setOnClickListener(v -> ouvrirRechercheOuAjoutProduit());
-
-        // Configurer le bouton de copie
-        Button buttonCopyList = findViewById(R.id.buttonCopyList);
-        buttonCopyList.setOnClickListener(v -> afficherDialogueCopie());
+        fabAddProduct.setOnClickListener(v -> ouvrirEcranAjoutProduit());
     }
 
-    private void chargerListeDetails() {
+    private void chargerDetailsDeLaListe() {
         progressBar.setVisibility(View.VISIBLE);
 
         try {
             ApiClient.ApiResponse<ProductList> response = apiClient.getList(listId).get();
 
             if (response.isSuccess() && response.getData() != null) {
-                productList = response.getData();
+                currentList = response.getData();
                 mettreAJourInterface();
+                chargerProduitsDeLaListe();
             } else {
                 Toast.makeText(this,
-                    "Erreur lors du chargement de la liste: " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
+                        "Erreur lors du chargement de la liste: " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
                 finish();
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(this,
-                "Erreur réseau: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
+                    "Erreur réseau: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
             finish();
         } finally {
             progressBar.setVisibility(View.GONE);
@@ -122,18 +123,22 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
     }
 
     private void mettreAJourInterface() {
-        textViewListName.setText(productList.getNom());
+        textViewListName.setText(currentList.getNom());
 
-        if (productList.getDescription() != null && !productList.getDescription().isEmpty()) {
-            textViewListDescription.setText(productList.getDescription());
+        if (currentList.getDescription() != null && !currentList.getDescription().isEmpty()) {
+            textViewListDescription.setText(currentList.getDescription());
             textViewListDescription.setVisibility(View.VISIBLE);
         } else {
             textViewListDescription.setVisibility(View.GONE);
         }
+    }
 
-        if (productList.getProduits() != null && !productList.getProduits().isEmpty()) {
-            adapter = new ProductAdapter(productList.getProduits(), this);
-            recyclerViewProducts.setAdapter(adapter);
+    private void chargerProduitsDeLaListe() {
+        if (currentList.getProduits() != null && !currentList.getProduits().isEmpty()) {
+            productList.clear();
+            productList.addAll(currentList.getProduits());
+            adapter.notifyDataSetChanged();
+
             recyclerViewProducts.setVisibility(View.VISIBLE);
             textViewEmptyList.setVisibility(View.GONE);
         } else {
@@ -142,62 +147,58 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
         }
     }
 
-    private void ouvrirRechercheOuAjoutProduit() {
+    private void ouvrirEcranAjoutProduit() {
         Intent intent = new Intent(this, ProductsActivity.class);
         intent.putExtra("list_id", listId);
         startActivityForResult(intent, REQUEST_ADD_PRODUCT);
     }
 
-    private void afficherDialogueCopie() {
+    public void copyList(View view) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View view = getLayoutInflater().inflate(R.layout.dialog_copy_list, null);
-        EditText editTextListName = view.findViewById(R.id.editTextListName);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_copy_list, null);
+        EditText editTextListName = dialogView.findViewById(R.id.editTextListName);
 
-        // Proposer un nom pour la copie
-        String suggestedName = getString(R.string.list_copy, productList.getNom());
+        // Suggérer un nom pour la copie
+        String suggestedName = getString(R.string.list_copy, currentList.getNom());
         editTextListName.setText(suggestedName);
+        editTextListName.selectAll();
 
-        builder.setView(view)
+        builder.setView(dialogView)
                .setTitle(R.string.copy_list)
                .setPositiveButton(R.string.copy, (dialog, which) -> {
-                   String nomCopie = editTextListName.getText().toString().trim();
-                   if (!nomCopie.isEmpty()) {
-                       copierListe(nomCopie);
+                   String newListName = editTextListName.getText().toString().trim();
+                   if (!newListName.isEmpty()) {
+                       copierListe(newListName);
                    } else {
-                       Toast.makeText(ListDetailActivity.this,
-                                      R.string.list_name_required,
-                                      Toast.LENGTH_SHORT).show();
+                       Toast.makeText(this, R.string.list_name_required, Toast.LENGTH_SHORT).show();
                    }
                })
                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
                .show();
     }
 
-    private void copierListe(String nomCopie) {
+    private void copierListe(String newListName) {
         progressBar.setVisibility(View.VISIBLE);
 
         try {
-            ApiClient.ApiResponse<ProductList> response = apiClient.copyList(listId, nomCopie).get();
+            ApiClient.ApiResponse<ProductList> response = apiClient.copyList(listId, newListName).get();
 
             if (response.isSuccess() && response.getData() != null) {
                 Toast.makeText(this, R.string.list_copied_success, Toast.LENGTH_SHORT).show();
 
-                // Actualiser la liste des listes à l'activité précédente
-                setResult(RESULT_OK);
-
-                // Ouvrir la liste copiée
+                // Ouvrir la nouvelle liste
                 Intent intent = new Intent(this, ListDetailActivity.class);
                 intent.putExtra("list_id", response.getData().getId());
                 startActivity(intent);
             } else {
                 Toast.makeText(this,
-                    "Erreur lors de la copie: " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
+                        "Erreur lors de la copie de la liste: " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(this,
-                "Erreur réseau: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
+                    "Erreur réseau: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         } finally {
             progressBar.setVisibility(View.GONE);
         }
@@ -205,7 +206,7 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
 
     @Override
     public void onProductClick(Product product) {
-        // Ouvrir les détails du produit
+        // Ouvrir le détail du produit
         Intent intent = new Intent(this, ProductDetailActivity.class);
         intent.putExtra("product_id", product.getId());
         startActivity(intent);
@@ -215,8 +216,8 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ADD_PRODUCT && resultCode == RESULT_OK) {
-            // Recharger les détails de la liste
-            chargerListeDetails();
+            // Rafraîchir la liste après l'ajout d'un produit
+            chargerDetailsDeLaListe();
         }
     }
 
@@ -227,5 +228,11 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
     }
 }
