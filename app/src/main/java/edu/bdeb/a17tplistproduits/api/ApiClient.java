@@ -420,6 +420,9 @@ public class ApiClient {
         });
     }
 
+    public List<Object> searchProducts(String query) {
+    }
+
     // Classe pour la réponse d'authentification
     private static class LoginResponse {
         private String access_token;
