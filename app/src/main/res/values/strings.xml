@@ -40,8 +40,9 @@
     <string name="product_added_to_list">Produit ajouté à la liste</string>
     <string name="copy">Copier</string>
     <string name="list_copied">Liste copiée avec succès</string>
-
-    <string name="list_name_required">Le nom de la liste est requis</string>
+    <string name="list_name_required">List name is required</string>
+    <string name="list_created_success">List created successfully</string>
+    <string name="list_creation_error">Error creating list</string>
 
     <!-- Product strings -->
     <string name="product_name">Nom du produit</string>
