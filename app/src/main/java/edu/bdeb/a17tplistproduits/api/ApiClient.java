@@ -67,52 +67,7 @@ public class ApiClient {
 
     // ========== Authentication methods ==========
 
-    public Future<ApiResponse<Boolean>> login(String username, String password) {
-        return executorService.submit(() -> {
-            try {
-                URL url = new URL(BASE_URL + "/auth/login");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setDoOutput(true);
 
-                JSONObject jsonRequest = new JSONObject();
-                jsonRequest.put("username", username);
-                jsonRequest.put("password", password);
-
-                // Send request
-                try (OutputStream os = conn.getOutputStream()) {
-                    byte[] input = jsonRequest.toString().getBytes(StandardCharsets.UTF_8);
-                    os.write(input, 0, input.length);
-                }
-
-                // Read response
-                int responseCode = conn.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    JSONObject response = new JSONObject(reader.readLine());
-
-                    if (response.has("token")) {
-                        String token = response.getString("token");
-                        String userId = response.getString("user_id");
-
-                        // Save authentication token
-                        sessionManager.saveUserSession(userId, token);
-                        return new ApiResponse<>(true);
-                    } else {
-                        return new ApiResponse<>("Identifiants invalides");
-                    }
-                } else {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-                    JSONObject error = new JSONObject(reader.readLine());
-                    return new ApiResponse<>(error.getString("message"));
-                }
-            } catch (IOException | JSONException e) {
-                Log.e(TAG, "Error during login: " + e.getMessage());
-                return new ApiResponse<>("Erreur réseau: " + e.getMessage());
-            }
-        });
-    }
 
     public Future<ApiResponse<Boolean>> register(String username, String password, String email) {
         return executorService.submit(() -> {
