@@ -28,6 +28,16 @@
     <string name="list_copied_success">Liste copiée avec succès</string>
     <string name="error_copying_list">Erreur lors de la copie de la liste</string>
     <string name="product_count">Produits:</string>
+    <string name="list_detail">Détails de la liste</string>
+    <string name="network_error">Erreur réseau</string>
+    <string name="products">Produits</string>
+    <string name="empty_product_list">Aucun produit dans cette liste</string>
+    <string name="enter_quantity">Entrez la quantité</string>
+    <string name="add">Ajouter</string>
+    <string name="cancel">Annuler</string>
+    <string name="product_added_to_list">Produit ajouté à la liste</string>
+    <string name="copy">Copier</string>
+    <string name="list_copied">Liste copiée avec succès</string>
 
     <!-- Product strings -->
     <string name="product_name">Nom du produit</string>
