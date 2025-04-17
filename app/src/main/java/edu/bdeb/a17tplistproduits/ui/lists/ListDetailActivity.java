@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import edu.bdeb.a17tplistproduits.R;
@@ -32,167 +31,171 @@ import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class ListDetailActivity extends AppCompatActivity implements ProductAdapter.OnProductClickListener {
 
-    public static final String EXTRA_LIST_ID = "list_id";
+    private static final String TAG = "ListDetailActivity";
     private static final int REQUEST_ADD_PRODUCT = 1;
 
     private ApiClient apiClient;
     private SessionManager sessionManager;
-    private String listId;
-    private ProductList currentList;
 
-    // UI components
     private TextView textViewListName;
     private TextView textViewListDescription;
+    private TextView textViewProductsTitle;
     private RecyclerView recyclerViewProducts;
-    private ProgressBar progressBar;
     private TextView textViewEmptyList;
+    private ProgressBar progressBar;
     private FloatingActionButton fabAddProduct;
     private Button buttonCopyList;
 
-    private ProductAdapter productAdapter;
-    private List<Product> productList = new ArrayList<>();
+    private ProductList productList;
+    private String listId;
+    private ProductAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list_detail);
 
-        // Setup toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle(R.string.list_details);
-
-        // Initialize API client and session manager
+        // Initialiser les services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Get list ID from intent
-        listId = getIntent().getStringExtra(EXTRA_LIST_ID);
-        if (listId == null) {
-            Toast.makeText(this, R.string.error_loading_list, Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        // Configurer la toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle(R.string.list_details);
         }
 
-        // Initialize UI components
-        initializeViews();
-        setupRecyclerView();
-        setupListeners();
-
-        // Load list data
-        loadListDetails();
-    }
-
-    private void initializeViews() {
+        // Initialiser les vues
         textViewListName = findViewById(R.id.textViewListName);
         textViewListDescription = findViewById(R.id.textViewListDescription);
+        textViewProductsTitle = findViewById(R.id.textViewProductsTitle);
         recyclerViewProducts = findViewById(R.id.recyclerViewProducts);
-        progressBar = findViewById(R.id.progressBar);
         textViewEmptyList = findViewById(R.id.textViewEmptyList);
+        progressBar = findViewById(R.id.progressBar);
         fabAddProduct = findViewById(R.id.fabAddProduct);
         buttonCopyList = findViewById(R.id.buttonCopyList);
-    }
 
-    private void setupRecyclerView() {
-        productAdapter = new ProductAdapter(productList, this);
+        // Configurer le RecyclerView
         recyclerViewProducts.setLayoutManager(new LinearLayoutManager(this));
-        recyclerViewProducts.setAdapter(productAdapter);
+        adapter = new ProductAdapter(new ArrayList<>(), this);
+        recyclerViewProducts.setAdapter(adapter);
+
+        // Obtenir l'ID de la liste depuis l'intent
+        if (getIntent().hasExtra("list_id")) {
+            listId = getIntent().getStringExtra("list_id");
+            chargerDetailsDeLaListe();
+        } else {
+            Toast.makeText(this, R.string.list_not_found, Toast.LENGTH_SHORT).show();
+            finish();
+        }
+
+        // Configurer les écouteurs d'événements
+        fabAddProduct.setOnClickListener(v -> ouvrirEcranAjoutProduit());
+        buttonCopyList.setOnClickListener(v -> afficherDialogueCopie());
     }
 
-    private void setupListeners() {
-        fabAddProduct.setOnClickListener(v -> navigateToProductSelection());
-        buttonCopyList.setOnClickListener(v -> showCopyListDialog());
-    }
-
-    private void loadListDetails() {
+    private void chargerDetailsDeLaListe() {
         progressBar.setVisibility(View.VISIBLE);
-        recyclerViewProducts.setVisibility(View.GONE);
-        textViewEmptyList.setVisibility(View.GONE);
 
         try {
             ApiClient.ApiResponse<ProductList> response = apiClient.getList(listId).get();
-            if (response.isSuccess()) {
-                currentList = response.getData();
-                updateUI();
+
+            if (response.isSuccess() && response.getData() != null) {
+                productList = response.getData();
+                mettreAJourInterface();
             } else {
-                Toast.makeText(this, getString(R.string.error_loading_list) + ": " + response.getErrorMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this,
+                    "Erreur lors du chargement de la liste: " + response.getErrorMessage(),
+                    Toast.LENGTH_LONG).show();
                 finish();
             }
         } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(this, getString(R.string.error_loading_list) + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this,
+                "Erreur réseau: " + e.getMessage(),
+                Toast.LENGTH_LONG).show();
             finish();
         } finally {
             progressBar.setVisibility(View.GONE);
         }
     }
 
-    private void updateUI() {
-        if (currentList != null) {
-            textViewListName.setText(currentList.getNom());
+    private void mettreAJourInterface() {
+        textViewListName.setText(productList.getNom());
 
-            if (currentList.getDescription() != null && !currentList.getDescription().isEmpty()) {
-                textViewListDescription.setText(currentList.getDescription());
-                textViewListDescription.setVisibility(View.VISIBLE);
-            } else {
-                textViewListDescription.setVisibility(View.GONE);
-            }
+        if (productList.getDescription() != null && !productList.getDescription().isEmpty()) {
+            textViewListDescription.setText(productList.getDescription());
+            textViewListDescription.setVisibility(View.VISIBLE);
+        } else {
+            textViewListDescription.setVisibility(View.GONE);
+        }
 
-            productList.clear();
-            if (currentList.getProduits() != null && !currentList.getProduits().isEmpty()) {
-                productList.addAll(currentList.getProduits());
-                recyclerViewProducts.setVisibility(View.VISIBLE);
-                textViewEmptyList.setVisibility(View.GONE);
-            } else {
-                recyclerViewProducts.setVisibility(View.GONE);
-                textViewEmptyList.setVisibility(View.VISIBLE);
-            }
-            productAdapter.notifyDataSetChanged();
+        if (productList.getProduits() != null && !productList.getProduits().isEmpty()) {
+            adapter = new ProductAdapter(productList.getProduits(), this);
+            recyclerViewProducts.setAdapter(adapter);
+            textViewEmptyList.setVisibility(View.GONE);
+            recyclerViewProducts.setVisibility(View.VISIBLE);
+        } else {
+            textViewEmptyList.setVisibility(View.VISIBLE);
+            recyclerViewProducts.setVisibility(View.GONE);
         }
     }
 
-    private void navigateToProductSelection() {
+    private void ouvrirEcranAjoutProduit() {
         Intent intent = new Intent(this, ProductsActivity.class);
-        intent.putExtra(ProductsActivity.EXTRA_LIST_ID, listId);
+        intent.putExtra("list_id", listId);
         startActivityForResult(intent, REQUEST_ADD_PRODUCT);
     }
 
-    private void showCopyListDialog() {
-        View view = getLayoutInflater().inflate(R.layout.dialog_copy_list, null);
-        EditText editTextListName = view.findViewById(R.id.editTextListName);
-        editTextListName.setText(getString(R.string.list_copy, currentList.getNom()));
-
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.copy_list)
-                .setView(view)
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    String newName = editTextListName.getText().toString().trim();
-                    if (!newName.isEmpty()) {
-                        copyList(newName);
-                    } else {
-                        Toast.makeText(this, R.string.list_name_required, Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+    public void copyList(View view) {
+        afficherDialogueCopie();
     }
 
-    private void copyList(String newName) {
+    private void afficherDialogueCopie() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_copy_list, null);
+        EditText editTextListName = view.findViewById(R.id.editTextListName);
+
+        // Proposer un nom par défaut
+        String defaultName = "Copie de " + productList.getNom();
+        editTextListName.setText(defaultName);
+
+        builder.setView(view)
+               .setTitle(R.string.copy_list)
+               .setPositiveButton(R.string.copy, (dialog, which) -> {
+                   String newName = editTextListName.getText().toString().trim();
+                   if (!newName.isEmpty()) {
+                       effectuerCopieDeLaListe(newName);
+                   } else {
+                       Toast.makeText(this, "Nom de liste requis", Toast.LENGTH_SHORT).show();
+                   }
+               })
+               .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
+               .show();
+    }
+
+    private void effectuerCopieDeLaListe(String newName) {
         progressBar.setVisibility(View.VISIBLE);
 
         try {
             ApiClient.ApiResponse<ProductList> response = apiClient.copyList(listId, newName).get();
-            if (response.isSuccess()) {
-                Toast.makeText(this, R.string.list_copied, Toast.LENGTH_SHORT).show();
-                // Optionally navigate to the newly created list
+
+            if (response.isSuccess() && response.getData() != null) {
+                Toast.makeText(this, "Liste copiée avec succès", Toast.LENGTH_SHORT).show();
+                // Ouvrir la nouvelle liste
                 Intent intent = new Intent(this, ListDetailActivity.class);
-                intent.putExtra(EXTRA_LIST_ID, response.getData().getId());
+                intent.putExtra("list_id", response.getData().getId());
                 startActivity(intent);
             } else {
-                Toast.makeText(this, getString(R.string.error_copying_list) + ": " + response.getErrorMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this,
+                    "Erreur lors de la copie de la liste: " + response.getErrorMessage(),
+                    Toast.LENGTH_LONG).show();
             }
         } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(this, getString(R.string.error_copying_list) + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this,
+                "Erreur réseau: " + e.getMessage(),
+                Toast.LENGTH_LONG).show();
         } finally {
             progressBar.setVisibility(View.GONE);
         }
@@ -200,16 +203,56 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
 
     @Override
     public void onProductClick(Product product) {
-        // On peut ajouter une action lorsque l'utilisateur clique sur un produit
-        // Par exemple, afficher les détails du produit ou permettre de modifier la quantité
+        // Afficher la boîte de dialogue pour ajouter le produit à la liste
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_product_quantity, null);
+        EditText editTextQuantity = view.findViewById(R.id.editTextQuantity);
+        editTextQuantity.setText(String.valueOf(product.getQuantite()));
+
+        builder.setView(view)
+               .setTitle("Quantité de " + product.getNom())
+               .setPositiveButton("Ajouter", (dialog, which) -> {
+                   try {
+                       double quantity = Double.parseDouble(editTextQuantity.getText().toString());
+                       ajouterProduitALaListe(product.getId(), quantity);
+                   } catch (NumberFormatException e) {
+                       Toast.makeText(this, "Quantité invalide", Toast.LENGTH_SHORT).show();
+                   }
+               })
+               .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss())
+               .show();
+    }
+
+    private void ajouterProduitALaListe(String productId, double quantity) {
+        progressBar.setVisibility(View.VISIBLE);
+
+        try {
+            ApiClient.ApiResponse<ProductList> response = apiClient.addProductToList(listId, productId, quantity).get();
+
+            if (response.isSuccess() && response.getData() != null) {
+                productList = response.getData();
+                mettreAJourInterface();
+                Toast.makeText(this, "Produit ajouté à la liste", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this,
+                    "Erreur lors de l'ajout du produit: " + response.getErrorMessage(),
+                    Toast.LENGTH_LONG).show();
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            Toast.makeText(this,
+                "Erreur réseau: " + e.getMessage(),
+                Toast.LENGTH_LONG).show();
+        } finally {
+            progressBar.setVisibility(View.GONE);
+        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ADD_PRODUCT && resultCode == RESULT_OK) {
-            // Recharger les détails de la liste après l'ajout d'un produit
-            loadListDetails();
+            // Recharger la liste pour afficher le nouveau produit
+            chargerDetailsDeLaListe();
         }
     }
 
