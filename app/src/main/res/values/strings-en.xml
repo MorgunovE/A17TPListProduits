@@ -1,2 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="app_name">A17TPProductList</string>
+
+    <!-- Auth strings -->
+    <string name="login_title">Login</string>
+    <string name="username_hint">Username</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Login</string>
+    <string name="register_prompt">No account? Register here</string>
+    <string name="register_title">Register</string>
+    <string name="email_hint">Email</string>
+    <string name="confirm_password_hint">Confirm password</string>
+    <string name="register_button">Register</string>
+    <string name="login_prompt">Already have an account? Login here</string>
+
+    <!-- Main app strings -->
+    <string name="product_lists">My Lists</string>
+    <string name="add_list">Add List</string>
+    <string name="no_lists">No lists found</string>
+    <string name="error_loading_lists">Error loading lists</string>
+    <string name="list_name">List name</string>
+    <string name="list_description">Description (optional)</string>
+    <string name="create_list">Create List</string>
+    <string name="list_copy">Copy of %1$s</string>
+    <string name="copy_list">Copy List</string>
+
+    <!-- Product strings -->
+    <string name="product_name">Product name</string>
+    <string name="product_quantity">Quantity</string>
+    <string name="product_unit">Unit</string>
+    <string name="product_price">Price</string>
+    <string name="product_description">Description</string>
+    <string name="add_product">Add product</string>
+    <string name="search_products">Search products</string>
+    <string name="product_details">Product details</string>
+</resources>
