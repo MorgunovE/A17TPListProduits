@@ -52,8 +52,16 @@ public class SessionManager {
     }
 
     public void saveUserSession(String userId, String token) {
+        editor.putString("userId", userId);
+        editor.putString(KEY_TOKEN, token);
+        editor.putBoolean(KEY_IS_LOGGED_IN, true);
+        editor.apply();
     }
 
     public void clearSession() {
+        editor.remove("userId");
+        editor.remove(KEY_TOKEN);
+        editor.remove(KEY_IS_LOGGED_IN);
+        editor.apply();
     }
 }
