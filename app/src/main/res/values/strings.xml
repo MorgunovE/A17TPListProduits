@@ -60,6 +60,15 @@
     <string name="error_adding_product">Erreur lors de l\'ajout du produit</string>
     <string name="list_not_found">liste non trouve</string>
     <string name="no_products_found">Aucun produit trouvé</string>
+    <string name="product_name_required">Nom du produit requis</string>
+    <string name="quantity_required">Quantité requise</string>
+    <string name="unit_required">Unité requise</string>
+    <string name="price_required">Prix requis</string>
+    <string name="invalid_price">Prix invalide</string>
+    <string name="product_created_success">Produit créé avec succès</string>
+    <string name="product_creation_error">Erreur lors de la création du produit</string>
+    <string name="product_added_to_list_success">Produit ajouté à la liste avec succès</string>
+    <string name="product_add_to_list_error">Erreur lors de l\'ajout du produit à la liste</string>
 
 
 </resources>
