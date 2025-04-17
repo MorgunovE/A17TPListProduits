@@ -94,4 +94,10 @@
     <string name="full_name">full name</string>
     <string name="login_failed">login failed</string>
 
+    <string name="password_length">Password length</string>
+    <string name="password_min_length">Minimum password length</string>
+    <string name="passwords_dont_match">Passwords do not match</string>
+    <string name="registration_successful">Registration successful</string>
+    <string name="login_after_registration_failed">Registration successful, but login failed</string>
+
 </resources>
