@@ -52,8 +52,8 @@ public class ApiClient {
             this.success = false;
         }
 
-        public T getData() {
-            return data;
+        public String getData() {
+            return (String) data;
         }
 
         public String getErrorMessage() {
