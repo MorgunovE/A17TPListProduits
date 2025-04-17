@@ -38,15 +38,15 @@
             android:exported="false" />
 
         <activity
-            android:name=".ui.product.ProductDetailActivity"
+            android:name=".ui.products.ProductDetailActivity"
             android:exported="false" />
 
         <activity
-            android:name=".ui.product.AddProductActivity"
+            android:name=".ui.products.AddProductActivity"
             android:exported="false" />
 
         <activity
-            android:name=".ui.list.AddListActivity"
+            android:name=".ui.lists.AddListActivity"
             android:exported="false" />
     </application>
 
