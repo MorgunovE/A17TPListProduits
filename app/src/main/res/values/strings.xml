@@ -70,5 +70,11 @@
     <string name="product_added_to_list_success">Produit ajouté à la liste avec succès</string>
     <string name="product_add_to_list_error">Erreur lors de l\'ajout du produit à la liste</string>
 
+    <string name="product_not_found">Produit non trouvé</string>
+    <string name="add_to_list">Ajouter à une liste</string>
+    <string name="select_list">Sélectionner une liste</string>
+    <string name="quantity_for">Quantité de %1$s</string>
+    <string name="invalid_quantity">Quantité invalide</string>
+
 
 </resources>
