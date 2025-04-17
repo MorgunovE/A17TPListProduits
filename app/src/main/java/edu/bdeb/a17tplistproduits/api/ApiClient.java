@@ -94,62 +94,6 @@ public class ApiClient {
     }
 
     // Authentication methods
-//    public CompletableFuture<ApiResponse<String>> login(String username, String password) {
-//        CompletableFuture<ApiResponse<String>> future = new CompletableFuture<>();
-//
-//        new AsyncTask<Void, Void, ApiResponse<String>>() {
-//            @Override
-//            protected ApiResponse<String> doInBackground(Void... voids) {
-//                try {
-//                    JSONObject jsonBody = new JSONObject();
-//                    jsonBody.put("username", username);
-//                    jsonBody.put("password", password);
-//
-//                    String jsonResponse = performRequest(BASE_URL + "/connexion", "POST",
-//                            jsonBody.toString(), null);
-//
-//                    Log.d(TAG, "Login raw response: " + jsonResponse);
-//
-//                    JSONObject response = new JSONObject(jsonResponse);
-//
-//                    if (response.has("access_token")) {
-//                        String token = response.getString("access_token");
-//                        Log.d(TAG, "Login successful with token: " + token.substring(0, 15) + "...");
-//                        return new ApiResponse<>(token);
-//                    } else if (response.has("erreur")) {
-//                        String errorMsg = response.getString("erreur");
-//                        Log.d(TAG, "Login response with erreur: " + errorMsg);
-//
-//                        // Check if the "error" is actually a JWT token
-//                        if (errorMsg.startsWith("eyJ")) {
-//                            Log.w(TAG, "API inconsistency: received token in error field");
-//                            // You could potentially return a success response here instead
-//                            return new ApiResponse<>(errorMsg);
-//                        }
-//
-//                        return new ApiResponse<>(errorMsg);
-//                    } else {
-//                        Log.e(TAG, "Login response has neither access_token nor erreur");
-//                        return new ApiResponse<>("Unknown error occurred");
-//                    }
-//                } catch (Exception e) {
-//                    Log.e(TAG, "Login error", e);
-//                    return new ApiResponse<>(e.getMessage());
-//                }
-//            }
-//
-//            @Override
-//            protected void onPostExecute(ApiResponse<String> result) {
-//                Log.d(TAG, "Login completed, success: " + result.isSuccess() +
-//                      ", has data: " + (result.getData() != null) +
-//                      ", error: " + result.getErrorMessage());
-//                future.complete(result);
-//            }
-//        }.execute();
-//
-//        return future;
-//    }
-
     public Future<ApiResponse<String>> login(String username, String password) {
         FutureTask<ApiResponse<String>> future = new FutureTask<>(() -> {
             ApiResponse<String> result = new ApiResponse<>();
@@ -200,7 +144,7 @@ public class ApiClient {
                     Log.e(TAG, "Login failed with code: " + responseCode + ", response: " + errorResponse);
 
                     // Check if error response is actually a JWT token
-                    if (errorResponse != null && errorResponse.startsWith("eyJ")) {
+                    if (errorResponse.startsWith("eyJ")) {
                         Log.d(TAG, "Found token in error response: " + errorResponse.substring(0, 15) + "...");
                         result.setSuccess(true);
                         result.setData(errorResponse);
