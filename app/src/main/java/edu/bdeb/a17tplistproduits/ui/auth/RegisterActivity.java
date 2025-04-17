@@ -2,6 +2,9 @@ package edu.bdeb.a17tplistproduits.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -11,55 +14,61 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONObject;
+
 import java.util.concurrent.ExecutionException;
 
 import edu.bdeb.a17tplistproduits.R;
 import edu.bdeb.a17tplistproduits.api.ApiClient;
-import edu.bdeb.a17tplistproduits.model.User;
 import edu.bdeb.a17tplistproduits.ui.lists.ListsActivity;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class RegisterActivity extends AppCompatActivity {
 
+    private static final String TAG = "RegisterActivity";
+
     private EditText editTextName;
     private EditText editTextEmail;
     private EditText editTextPassword;
+    private EditText editTextConfirmPassword;
     private Button buttonRegister;
     private TextView textViewLogin;
     private ProgressBar progressBar;
 
-    private SessionManager sessionManager;
     private ApiClient apiClient;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        // Initialize session manager and API client
+        // Initialize services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Initialize views
+        // Initialize UI elements
         editTextName = findViewById(R.id.editTextName);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
+        editTextConfirmPassword = findViewById(R.id.editTextConfirmPassword);
         buttonRegister = findViewById(R.id.buttonRegister);
         textViewLogin = findViewById(R.id.textViewLogin);
         progressBar = findViewById(R.id.progressBar);
 
-        // Set click listeners
+        // Set up click listeners
         buttonRegister.setOnClickListener(v -> registerUser());
         textViewLogin.setOnClickListener(v -> navigateToLogin());
     }
 
     private void registerUser() {
-        // Get input values
+        // Get input values and trim whitespace
         String name = editTextName.getText().toString().trim();
         String email = editTextEmail.getText().toString().trim();
-        String password = editTextPassword.getText().toString().trim();
+        String password = editTextPassword.getText().toString();
+        String confirmPassword = editTextConfirmPassword.getText().toString();
 
-        // Validate inputs
+        // Input validation
         if (name.isEmpty()) {
             editTextName.setError(getString(R.string.name_required));
             editTextName.requestFocus();
@@ -79,81 +88,132 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         if (password.length() < 6) {
-            editTextPassword.setError(getString(R.string.password_length));
+            editTextPassword.setError(getString(R.string.password_min_length));
             editTextPassword.requestFocus();
             return;
         }
 
-        // Show progress
+        if (!password.equals(confirmPassword)) {
+            editTextConfirmPassword.setError(getString(R.string.passwords_dont_match));
+            editTextConfirmPassword.requestFocus();
+            return;
+        }
+
+        // Show progress and disable button
         progressBar.setVisibility(View.VISIBLE);
         buttonRegister.setEnabled(false);
 
-        // Create user object
-        User user = new User();
-        user.setName(name);
-        user.setEmail(email);
-        user.setPassword(password);
-
         try {
-            // Call API to register user String username, String password, String email
-            ApiClient.ApiResponse<Boolean> response = apiClient.register(name, password, email).get();
+            // Create JSON object for registration request
+            JSONObject userJson = new JSONObject();
+            userJson.put("nom", name);
+            userJson.put("courriel", email);
+            userJson.put("motDePasse", password);
 
-            if (response.isSuccess() && response.getData() != null) {
-                // Registration successful, now login the user directly
-                loginAfterRegistration(email, password);
-            } else {
-                // Show error
-                Toast.makeText(RegisterActivity.this,
-                    "Registration failed: " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
-
-                progressBar.setVisibility(View.GONE);
-                buttonRegister.setEnabled(true);
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(RegisterActivity.this,
-                "Network error: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
-
+            // Use Future<ApiResponse<>> pattern directly as in LoginActivity
+            apiClient.register(name, password, email)
+                    .thenAccept(response -> {
+                        if (response.isSuccess() && response.getData() != null) {
+                            // Registration successful, now attempt login
+                            loginAfterRegistration(name, password);
+                        } else {
+                            // Registration failed
+                            runOnUiThread(() -> {
+                                Toast.makeText(
+                                        RegisterActivity.this,
+                                        getString(R.string.registration_failed) + ": " + response.getErrorMessage(),
+                                        Toast.LENGTH_LONG
+                                ).show();
+                                progressBar.setVisibility(View.GONE);
+                                buttonRegister.setEnabled(true);
+                            });
+                        }
+                    })
+                    .exceptionally(e -> {
+                        Log.e(TAG, "Registration error", e);
+                        runOnUiThread(() -> {
+                            Toast.makeText(
+                                    RegisterActivity.this,
+                                    getString(R.string.network_error) + ": " + e.getMessage(),
+                                    Toast.LENGTH_LONG
+                            ).show();
+                            progressBar.setVisibility(View.GONE);
+                            buttonRegister.setEnabled(true);
+                        });
+                        return null;
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Registration error", e);
+            Toast.makeText(
+                    RegisterActivity.this,
+                    getString(R.string.network_error) + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG
+            ).show();
             progressBar.setVisibility(View.GONE);
             buttonRegister.setEnabled(true);
         }
     }
 
-    private void loginAfterRegistration(String email, String password) {
-        try {
-            // Call API to login
-            ApiClient.ApiResponse<String> response = apiClient.login(email, password).get();
+    private void loginAfterRegistration(String name, String password) {
+        // Create a handler to post results back to the UI thread
+        final Handler handler = new Handler(Looper.getMainLooper());
 
-            if (response.isSuccess() && response.getData() != null) {
-                // Save token and navigate to lists activity
-                sessionManager.saveToken(response.getData());
-                sessionManager.saveEmail(email);
+        // Create a new thread for the login operation
+        new Thread(() -> {
+            try {
+                // Get the response from the API client
+                ApiClient.ApiResponse<String> response = apiClient.login(name, password).get();
 
-                Intent intent = new Intent(RegisterActivity.this, ListsActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
-            } else {
-                // Login failed after registration
-                Toast.makeText(RegisterActivity.this,
-                    "Registration successful but login failed. Please try logging in manually.",
-                    Toast.LENGTH_LONG).show();
+                // Post the result back to the UI thread
+                handler.post(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    buttonRegister.setEnabled(true);
 
-                // Navigate to login page
-                navigateToLogin();
+                    if (response.isSuccess() && response.getData() != null) {
+                        // The token is in response.getData() - this is a successful login
+                        String token = response.getData();
+                        Toast.makeText(
+                                RegisterActivity.this,
+                                R.string.registration_successful,
+                                Toast.LENGTH_SHORT
+                        ).show();
+
+                        sessionManager.saveAuthToken(token);
+                        Log.d(TAG, "Token saved: " + token.substring(0, 15) + "...");
+
+                        // Navigate to main screen
+                        Intent intent = new Intent(RegisterActivity.this, ListsActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        // Actual login failure
+                        Toast.makeText(
+                                RegisterActivity.this,
+                                getString(R.string.login_after_registration_failed) + ": " + response.getErrorMessage(),
+                                Toast.LENGTH_LONG
+                        ).show();
+                        Log.e(TAG, "Login after registration failed: " + response.getErrorMessage());
+                        navigateToLogin(); // Redirect to login page
+                    }
+                });
+            } catch (ExecutionException | InterruptedException e) {
+                Log.e(TAG, "Login after registration error", e);
+
+                // Post the error back to the UI thread
+                handler.post(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    buttonRegister.setEnabled(true);
+
+                    Toast.makeText(
+                            RegisterActivity.this,
+                            getString(R.string.network_error) + ": " + e.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+                    navigateToLogin(); // Redirect to login page
+                });
             }
-        } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(RegisterActivity.this,
-                "Registration successful but login failed: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
-
-            // Navigate to login page
-            navigateToLogin();
-        } finally {
-            progressBar.setVisibility(View.GONE);
-            buttonRegister.setEnabled(true);
-        }
+        }).start();
     }
 
     private void navigateToLogin() {
