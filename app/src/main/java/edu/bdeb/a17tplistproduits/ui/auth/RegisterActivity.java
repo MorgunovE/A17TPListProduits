@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONObject;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import edu.bdeb.a17tplistproduits.R;
 import edu.bdeb.a17tplistproduits.api.ApiClient;
@@ -103,55 +104,44 @@ public class RegisterActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         buttonRegister.setEnabled(false);
 
-        try {
-            // Create JSON object for registration request
-            JSONObject userJson = new JSONObject();
-            userJson.put("nom", name);
-            userJson.put("courriel", email);
-            userJson.put("motDePasse", password);
+        // Use a background thread for network operations
+        new Thread(() -> {
+            try {
+                // Call register with the correct parameter order: username, password, email
+                Future<ApiClient.ApiResponse<String>> futureResponse = apiClient.register(name, password, email);
 
-            // Use Future<ApiResponse<>> pattern directly as in LoginActivity
-            apiClient.register(name, password, email)
-                    .thenAccept(response -> {
-                        if (response.isSuccess() && response.getData() != null) {
-                            // Registration successful, now attempt login
-                            loginAfterRegistration(name, password);
-                        } else {
-                            // Registration failed
-                            runOnUiThread(() -> {
-                                Toast.makeText(
-                                        RegisterActivity.this,
-                                        getString(R.string.registration_failed) + ": " + response.getErrorMessage(),
-                                        Toast.LENGTH_LONG
-                                ).show();
-                                progressBar.setVisibility(View.GONE);
-                                buttonRegister.setEnabled(true);
-                            });
-                        }
-                    })
-                    .exceptionally(e -> {
-                        Log.e(TAG, "Registration error", e);
-                        runOnUiThread(() -> {
-                            Toast.makeText(
-                                    RegisterActivity.this,
-                                    getString(R.string.network_error) + ": " + e.getMessage(),
-                                    Toast.LENGTH_LONG
-                            ).show();
-                            progressBar.setVisibility(View.GONE);
-                            buttonRegister.setEnabled(true);
-                        });
-                        return null;
-                    });
-        } catch (Exception e) {
-            Log.e(TAG, "Registration error", e);
-            Toast.makeText(
-                    RegisterActivity.this,
-                    getString(R.string.network_error) + ": " + e.getMessage(),
-                    Toast.LENGTH_LONG
-            ).show();
-            progressBar.setVisibility(View.GONE);
-            buttonRegister.setEnabled(true);
-        }
+                // Wait for the response
+                ApiClient.ApiResponse<String> response = futureResponse.get();
+
+                // Process the response on the UI thread
+                runOnUiThread(() -> {
+                    if (response.isSuccess() && response.getData() != null) {
+                        // Registration successful, now attempt login
+                        loginAfterRegistration(name, password);
+                    } else {
+                        // Registration failed
+                        Toast.makeText(
+                                RegisterActivity.this,
+                                getString(R.string.registration_failed) + ": " + response.getErrorMessage(),
+                                Toast.LENGTH_LONG
+                        ).show();
+                        progressBar.setVisibility(View.GONE);
+                        buttonRegister.setEnabled(true);
+                    }
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Registration error", e);
+                runOnUiThread(() -> {
+                    Toast.makeText(
+                            RegisterActivity.this,
+                            getString(R.string.network_error) + ": " + e.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+                    progressBar.setVisibility(View.GONE);
+                    buttonRegister.setEnabled(true);
+                });
+            }
+        }).start();
     }
 
     private void loginAfterRegistration(String name, String password) {
