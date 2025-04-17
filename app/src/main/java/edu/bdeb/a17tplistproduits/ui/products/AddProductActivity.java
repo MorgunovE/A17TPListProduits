@@ -1,13 +1,16 @@
 package edu.bdeb.a17tplistproduits.ui.products;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import java.util.concurrent.ExecutionException;
 
@@ -19,6 +22,7 @@ import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class AddProductActivity extends AppCompatActivity {
 
+    private TextView textViewTitle;
     private EditText editTextProductName;
     private EditText editTextProductQuantity;
     private EditText editTextProductUnit;
@@ -29,18 +33,19 @@ public class AddProductActivity extends AppCompatActivity {
 
     private ApiClient apiClient;
     private SessionManager sessionManager;
-    private String listId; // ID de la liste où ajouter directement le produit (optionnel)
+    private String listId; // ID of the list to add the product to (optional)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_product);
 
-        // Initialiser les services
+        // Initialize services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Initialiser les vues
+        // Initialize views
+        textViewTitle = findViewById(R.id.textViewTitle);
         editTextProductName = findViewById(R.id.editTextProductName);
         editTextProductQuantity = findViewById(R.id.editTextProductQuantity);
         editTextProductUnit = findViewById(R.id.editTextProductUnit);
@@ -49,131 +54,140 @@ public class AddProductActivity extends AppCompatActivity {
         buttonAddProduct = findViewById(R.id.buttonAddProduct);
         progressBar = findViewById(R.id.progressBar);
 
-        // Récupérer l'ID de la liste si passé
+        // Get list ID if passed
         if (getIntent().hasExtra("list_id")) {
             listId = getIntent().getStringExtra("list_id");
         }
 
-        // Configurer l'écouteur du bouton d'ajout
-        buttonAddProduct.setOnClickListener(v -> ajouterProduit());
+        // Set up button listener
+        buttonAddProduct.setOnClickListener(v -> addProduct());
     }
 
-    private void ajouterProduit() {
-        // Récupérer les valeurs saisies
-        String nom = editTextProductName.getText().toString().trim();
-        String quantiteStr = editTextProductQuantity.getText().toString().trim();
-        String unite = editTextProductUnit.getText().toString().trim();
-        String prixStr = editTextProductPrice.getText().toString().trim();
+    private void addProduct() {
+        // Get input values
+        String name = editTextProductName.getText().toString().trim();
+        String quantityStr = editTextProductQuantity.getText().toString().trim();
+        String unit = editTextProductUnit.getText().toString().trim();
+        String priceStr = editTextProductPrice.getText().toString().trim();
         String description = editTextProductDescription.getText().toString().trim();
 
-        // Valider les entrées
-        if (nom.isEmpty()) {
-            editTextProductName.setError("Nom du produit requis");
+        // Validate inputs
+        if (name.isEmpty()) {
+            editTextProductName.setError(getString(R.string.product_name_required));
             editTextProductName.requestFocus();
             return;
         }
 
-        if (quantiteStr.isEmpty()) {
-            editTextProductQuantity.setError("Quantité requise");
+        if (quantityStr.isEmpty()) {
+            editTextProductQuantity.setError(getString(R.string.quantity_required));
             editTextProductQuantity.requestFocus();
             return;
         }
 
-        if (unite.isEmpty()) {
-            editTextProductUnit.setError("Unité requise");
+        if (unit.isEmpty()) {
+            editTextProductUnit.setError(getString(R.string.unit_required));
             editTextProductUnit.requestFocus();
             return;
         }
 
-        if (prixStr.isEmpty()) {
-            editTextProductPrice.setError("Prix requis");
+        if (priceStr.isEmpty()) {
+            editTextProductPrice.setError(getString(R.string.price_required));
             editTextProductPrice.requestFocus();
             return;
         }
 
-        double quantite;
-        double prix;
+        double quantity;
+        double price;
 
         try {
-            quantite = Double.parseDouble(quantiteStr);
+            quantity = Double.parseDouble(quantityStr);
         } catch (NumberFormatException e) {
-            editTextProductQuantity.setError("Quantité invalide");
+            editTextProductQuantity.setError(getString(R.string.invalid_quantity));
             editTextProductQuantity.requestFocus();
             return;
         }
 
         try {
-            prix = Double.parseDouble(prixStr);
+            price = Double.parseDouble(priceStr);
         } catch (NumberFormatException e) {
-            editTextProductPrice.setError("Prix invalide");
+            editTextProductPrice.setError(getString(R.string.invalid_price));
             editTextProductPrice.requestFocus();
             return;
         }
 
-        // Créer l'objet Product
-        Product nouveauProduit = new Product();
-        nouveauProduit.setNom(nom);
-        nouveauProduit.setQuantite(quantite);
-        nouveauProduit.setUnite(unite);
-        nouveauProduit.setPrix(prix);
-        nouveauProduit.setDescription(description);
+        // Create Product object
+        Product newProduct = new Product();
+        newProduct.setNom(name);
+        newProduct.setQuantite(quantity);
+        newProduct.setUnite(unit);
+        newProduct.setPrix(price);
+        newProduct.setDescription(description);
 
-        // Afficher la progression et désactiver le bouton
+        // Show progress and disable button
         progressBar.setVisibility(View.VISIBLE);
         buttonAddProduct.setEnabled(false);
 
-        // Envoyer la requête à l'API
+        // Send API request
         try {
-            ApiClient.ApiResponse<Product> response = apiClient.createProduct(nouveauProduit).get();
+            ApiClient.ApiResponse<Product> response = apiClient.createProduct(newProduct).get();
 
             if (response.isSuccess() && response.getData() != null) {
-                Product produitCree = response.getData();
+                Product createdProduct = response.getData();
 
                 if (listId != null) {
-                    // Si un ID de liste est fourni, ajouter le produit à cette liste
-                    ajouterProduitAListe(produitCree.getId(), quantite);
+                    // If list ID is provided, add product to this list
+                    addProductToList(createdProduct.getId(), quantity);
                 } else {
-                    // Sinon, simplement informer l'utilisateur que le produit a été créé
-                    Toast.makeText(this, "Produit créé avec succès", Toast.LENGTH_SHORT).show();
+                    // Otherwise, just notify user that product was created
+                    Toast.makeText(this, getString(R.string.product_created_success), Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);
                     finish();
                 }
             } else {
                 Toast.makeText(this,
-                        "Erreur lors de la création du produit: " + response.getErrorMessage(),
+                        getString(R.string.product_creation_error) + ": " + response.getErrorMessage(),
                         Toast.LENGTH_LONG).show();
                 progressBar.setVisibility(View.GONE);
                 buttonAddProduct.setEnabled(true);
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(this,
-                    "Erreur réseau: " + e.getMessage(),
+                    getString(R.string.network_error) + ": " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
             progressBar.setVisibility(View.GONE);
             buttonAddProduct.setEnabled(true);
         }
     }
 
-    private void ajouterProduitAListe(String productId, double quantite) {
+    private void addProductToList(String productId, double quantity) {
         try {
-            ApiClient.ApiResponse<ProductList> response = apiClient.addProductToList(listId, productId, quantite).get();
+            ApiClient.ApiResponse<ProductList> response = apiClient.addProductToList(listId, productId, quantity).get();
 
             if (response.isSuccess()) {
-                Toast.makeText(this, "Produit ajouté à la liste avec succès", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.product_added_to_list_success), Toast.LENGTH_SHORT).show();
                 setResult(RESULT_OK);
                 finish();
             } else {
                 Toast.makeText(this,
-                        "Erreur lors de l'ajout du produit à la liste: " + response.getErrorMessage(),
+                        getString(R.string.product_add_to_list_error) + ": " + response.getErrorMessage(),
                         Toast.LENGTH_LONG).show();
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(this,
-                    "Erreur réseau: " + e.getMessage(),
+                    getString(R.string.network_error) + ": " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         } finally {
             progressBar.setVisibility(View.GONE);
             buttonAddProduct.setEnabled(true);
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
