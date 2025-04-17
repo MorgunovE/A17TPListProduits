@@ -110,23 +110,21 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
             ApiClient.ApiResponse<ProductList> response = apiClient.getList(listId).get();
 
             if (response.isSuccess() && response.getData() != null) {
-                currentList = convertStringToProductList(response.getData());
-
-
+                // Remove the unnecessary conversion
                 currentList = response.getData();
                 mettreAJourInterface();
                 chargerProduitsDeLaListe();
             } else {
-                Toast.makeText(this,
-                    getString(R.string.list_not_found) + ": " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.list_not_found, Toast.LENGTH_SHORT).show();
                 finish();
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(this,
-                getString(R.string.network_error) + ": " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
+                    getString(R.string.network_error) + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
             finish();
+        } finally {
+            progressBar.setVisibility(View.GONE);
         }
     }
 
