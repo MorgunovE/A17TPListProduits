@@ -57,6 +57,7 @@
     <string name="add_product_to_list">Ajouter à la liste</string>
     <string name="product_added_success">Produit ajouté avec succès</string>
     <string name="error_adding_product">Erreur lors de l\'ajout du produit</string>
+    <string name="list_not_found">liste non trouve</string>
 
 
 </resources>
