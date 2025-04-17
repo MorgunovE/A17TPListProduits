@@ -52,7 +52,7 @@ public class ApiClient {
             this.success = false;
         }
 
-        public String getData() {
+        public T getData() {
             return data;
         }
 
