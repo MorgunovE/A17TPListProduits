@@ -1,7 +1,6 @@
 package edu.bdeb.a17tplistproduits.ui.products;
 
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -93,14 +92,14 @@ public class ProductDetailActivity extends AppCompatActivity {
                 mettreAJourInterface();
             } else {
                 Toast.makeText(this,
-                    "Erreur lors du chargement du produit: " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
+                        R.string.product_not_found + ": " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
                 finish();
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(this,
-                "Erreur réseau: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
+                    R.string.network_error + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
             finish();
         } finally {
             progressBar.setVisibility(View.GONE);
@@ -115,9 +114,8 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         if (product.getDescription() != null && !product.getDescription().isEmpty()) {
             textViewProductDescription.setText(product.getDescription());
-            textViewProductDescription.setVisibility(View.VISIBLE);
         } else {
-            textViewProductDescription.setVisibility(View.GONE);
+            textViewProductDescription.setText("-");
         }
     }
 
@@ -136,13 +134,13 @@ public class ProductDetailActivity extends AppCompatActivity {
                 }
             } else {
                 Toast.makeText(this,
-                    "Erreur lors du chargement des listes: " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
+                        R.string.error_loading_lists + ": " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(this,
-                "Erreur réseau: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
+                    R.string.network_error + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         } finally {
             progressBar.setVisibility(View.GONE);
         }
@@ -201,13 +199,13 @@ public class ProductDetailActivity extends AppCompatActivity {
                 finish();
             } else {
                 Toast.makeText(this,
-                    "Erreur lors de l'ajout du produit: " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
+                        "Erreur lors de l'ajout du produit: " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
             }
         } catch (ExecutionException | InterruptedException e) {
             Toast.makeText(this,
-                "Erreur réseau: " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
+                    R.string.network_error + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         } finally {
             progressBar.setVisibility(View.GONE);
         }
