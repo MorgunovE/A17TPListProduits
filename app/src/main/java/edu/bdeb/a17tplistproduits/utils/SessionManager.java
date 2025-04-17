@@ -135,4 +135,16 @@ public class SessionManager {
         editor.putString(KEY_USERNAME, username);
         editor.apply();
     }
+
+    public void saveToken(Boolean data) {
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putBoolean(KEY_AUTH_TOKEN, data);
+        editor.apply();
+    }
+
+    public void setLoggedIn(boolean b) {
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putBoolean(KEY_IS_LOGGED_IN, b);
+        editor.apply();
+    }
 }
