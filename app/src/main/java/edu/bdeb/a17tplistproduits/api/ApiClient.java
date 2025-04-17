@@ -25,7 +25,7 @@ import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class ApiClient {
     private static final String TAG = "ApiClient";
-    private static final String BASE_URL = "http://10.0.2.2:5000/api";
+    private static final String BASE_URL = "http://10.0.2.2:5000";
     private static final ExecutorService executor = Executors.newCachedThreadPool();
 
     private final SessionManager sessionManager;
