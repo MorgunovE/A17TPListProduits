@@ -41,6 +41,8 @@
     <string name="copy">Copier</string>
     <string name="list_copied">Liste copiée avec succès</string>
 
+    <string name="list_name_required">Le nom de la liste est requis</string>
+
     <!-- Product strings -->
     <string name="product_name">Nom du produit</string>
     <string name="product_quantity">Quantité</string>
@@ -55,4 +57,6 @@
     <string name="add_product_to_list">Ajouter à la liste</string>
     <string name="product_added_success">Produit ajouté avec succès</string>
     <string name="error_adding_product">Erreur lors de l\'ajout du produit</string>
+
+
 </resources>
