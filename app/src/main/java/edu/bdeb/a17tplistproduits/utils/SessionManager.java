@@ -50,4 +50,10 @@ public class SessionManager {
         editor.clear();
         editor.apply();
     }
+
+    public void saveUserSession(String userId, String token) {
+    }
+
+    public void clearSession() {
+    }
 }
