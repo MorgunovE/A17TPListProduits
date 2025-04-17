@@ -76,5 +76,12 @@
     <string name="quantity_for">Quantité de %1$s</string>
     <string name="invalid_quantity">Quantité invalide</string>
 
+    <string name="register">S\'inscrire</string>
+    <string name="username">Nom d\'utilisateur</string>
+    <string name="email">Courriel</string>
+    <string name="password">Mot de passe</string>
+    <string name="confirm_password">Confirmer le mot de passe</string>
+    <string name="already_have_account">Déjà un compte? Connectez-vous</string>
+
 
 </resources>
