@@ -2,6 +2,7 @@ package edu.bdeb.a17tplistproduits.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -80,9 +81,22 @@ public class LoginActivity extends AppCompatActivity {
                         progressBar.setVisibility(View.GONE);
                         buttonLogin.setEnabled(true);
 
+                        // Check if response data contains token
+                        String token = null;
                         if (response.isSuccess() && response.getData() != null) {
+                            token = response.getData();
+                        }
+                        // If not successful but error message looks like a JWT token
+                        else if (response.getErrorMessage() != null &&
+                                response.getErrorMessage().startsWith("eyJ")) {
+                            token = response.getErrorMessage();
+                        }
+
+                        if (token != null) {
                             // Save token and navigate to lists activity
-                            sessionManager.saveAuthToken(response.getData());
+                            sessionManager.saveAuthToken(token);
+                            Log.d("LoginActivity", "Token: " + token);
+                            Log.e("LoginActivity", "Response: " + response.getErrorMessage());
 
                             Intent intent = new Intent(LoginActivity.this, ListsActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -93,6 +107,7 @@ public class LoginActivity extends AppCompatActivity {
                             Toast.makeText(LoginActivity.this,
                                     getString(R.string.login_failed) + ": " + response.getErrorMessage(),
                                     Toast.LENGTH_LONG).show();
+                            Log.e("LoginActivity", "Login failed: " + response.getErrorMessage());
                         }
                     });
                 })
@@ -103,6 +118,7 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this,
                                 getString(R.string.network_error) + ": " + e.getMessage(),
                                 Toast.LENGTH_LONG).show();
+                        Log.e("LoginActivity", "Network error: " + e.getMessage());
                     });
                     return null;
                 });
