@@ -28,20 +28,20 @@ import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class ProductsActivity extends AppCompatActivity implements ProductAdapter.OnProductClickListener {
 
-    private static final String TAG = "ProductsActivity";
+    private static final int REQUEST_ADD_PRODUCT = 1;
 
-    private String listId;
     private ApiClient apiClient;
     private SessionManager sessionManager;
 
     private SearchView searchView;
     private RecyclerView recyclerViewProducts;
-    private ProgressBar progressBar;
     private TextView textViewNoProducts;
+    private ProgressBar progressBar;
     private FloatingActionButton fabAddProduct;
 
     private ProductAdapter adapter;
-    private List<Product> products = new ArrayList<>();
+    private List<Product> productList;
+    private String listId; // ID de la liste où ajouter les produits (si applicable)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,82 +60,65 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
             getSupportActionBar().setTitle(R.string.search_products);
         }
 
-        // Récupérer l'ID de la liste des extras (si disponible)
-        if (getIntent().hasExtra("list_id")) {
-            listId = getIntent().getStringExtra("list_id");
-        }
-
         // Initialiser les vues
         searchView = findViewById(R.id.searchView);
         recyclerViewProducts = findViewById(R.id.recyclerViewProducts);
-        progressBar = findViewById(R.id.progressBar);
         textViewNoProducts = findViewById(R.id.textViewNoProducts);
+        progressBar = findViewById(R.id.progressBar);
         fabAddProduct = findViewById(R.id.fabAddProduct);
 
         // Configurer le RecyclerView
         recyclerViewProducts.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new ProductAdapter(products, this);
+        productList = new ArrayList<>();
+        adapter = new ProductAdapter(productList, this);
         recyclerViewProducts.setAdapter(adapter);
 
-        // Configurer le SearchView
+        // Récupérer l'ID de la liste si passé
+        if (getIntent().hasExtra("list_id")) {
+            listId = getIntent().getStringExtra("list_id");
+        }
+
+        // Configurer la recherche
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                searchProducts(query);
+                rechercherProduits(query);
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (newText.length() > 2) {
-                    searchProducts(newText);
+                if (newText.length() >= 3) {
+                    rechercherProduits(newText);
                 } else if (newText.isEmpty()) {
-                    loadProducts(null);
+                    chargerProduits("");
                 }
                 return true;
             }
         });
 
-        // Configurer le bouton d'ajout de produit
-        fabAddProduct.setOnClickListener(v -> {
-            Intent intent = new Intent(ProductsActivity.this, AddProductActivity.class);
-            if (listId != null) {
-                intent.putExtra("list_id", listId);
-            }
-            startActivityForResult(intent, 1);
-        });
+        // Configurer le FAB
+        fabAddProduct.setOnClickListener(v -> ouvrirEcranAjoutProduit());
 
-        // Charger les produits initiaux
-        loadProducts(null);
+        // Chargement initial des produits
+        chargerProduits("");
     }
 
-    private void loadProducts(String searchTerm) {
+    private void rechercherProduits(String query) {
         progressBar.setVisibility(View.VISIBLE);
-        recyclerViewProducts.setVisibility(View.GONE);
-        textViewNoProducts.setVisibility(View.GONE);
 
         try {
-            ApiClient.ApiResponse<List<Product>> response = apiClient.getProducts(searchTerm).get();
+            ApiClient.ApiResponse<List<Product>> response = apiClient.searchProducts(query).get();
 
             if (response.isSuccess() && response.getData() != null) {
-                products.clear();
-                products.addAll(response.getData());
-                adapter.notifyDataSetChanged();
-
-                if (products.isEmpty()) {
-                    textViewNoProducts.setVisibility(View.VISIBLE);
-                    recyclerViewProducts.setVisibility(View.GONE);
-                } else {
-                    textViewNoProducts.setVisibility(View.GONE);
-                    recyclerViewProducts.setVisibility(View.VISIBLE);
-                }
+                mettreAJourListeProduits(response.getData());
             } else {
-                Toast.makeText(this,
-                        "Erreur lors du chargement des produits: " + response.getErrorMessage(),
+                Toast.makeText(ProductsActivity.this,
+                        "Erreur lors de la recherche: " + response.getErrorMessage(),
                         Toast.LENGTH_LONG).show();
             }
         } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(this,
+            Toast.makeText(ProductsActivity.this,
                     "Erreur réseau: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         } finally {
@@ -143,22 +126,65 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
         }
     }
 
-    private void searchProducts(String query) {
-        loadProducts(query);
+    private void chargerProduits(String query) {
+        progressBar.setVisibility(View.VISIBLE);
+
+        try {
+            ApiClient.ApiResponse<List<Product>> response;
+            if (query.isEmpty()) {
+                response = apiClient.getProducts().get();
+            } else {
+                response = apiClient.searchProducts(query).get();
+            }
+
+            if (response.isSuccess() && response.getData() != null) {
+                mettreAJourListeProduits(response.getData());
+            } else {
+                Toast.makeText(ProductsActivity.this,
+                        "Erreur lors du chargement des produits: " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            Toast.makeText(ProductsActivity.this,
+                    "Erreur réseau: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        } finally {
+            progressBar.setVisibility(View.GONE);
+        }
+    }
+
+    private void mettreAJourListeProduits(List<Product> products) {
+        productList.clear();
+        productList.addAll(products);
+        adapter.notifyDataSetChanged();
+
+        if (products.isEmpty()) {
+            textViewNoProducts.setVisibility(View.VISIBLE);
+            recyclerViewProducts.setVisibility(View.GONE);
+        } else {
+            textViewNoProducts.setVisibility(View.GONE);
+            recyclerViewProducts.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void ouvrirEcranAjoutProduit() {
+        Intent intent = new Intent(this, AddProductActivity.class);
+        if (listId != null) {
+            intent.putExtra("list_id", listId);
+        }
+        startActivityForResult(intent, REQUEST_ADD_PRODUCT);
     }
 
     @Override
     public void onProductClick(Product product) {
+        // Si listId est fourni, ajouter directement le produit à la liste
         if (listId != null) {
-            // Si nous avons un ID de liste, ajouter le produit à la liste
             Intent resultIntent = new Intent();
             resultIntent.putExtra("product_id", product.getId());
-            resultIntent.putExtra("product_name", product.getNom());
-            resultIntent.putExtra("product_quantity", product.getQuantite());
             setResult(RESULT_OK, resultIntent);
             finish();
         } else {
-            // Sinon, afficher les détails du produit
+            // Sinon ouvrir le détail du produit
             Intent intent = new Intent(this, ProductDetailActivity.class);
             intent.putExtra("product_id", product.getId());
             startActivity(intent);
@@ -168,9 +194,9 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            // Recharger les produits après l'ajout d'un nouveau produit
-            loadProducts(null);
+        if (requestCode == REQUEST_ADD_PRODUCT && resultCode == RESULT_OK) {
+            // Rafraîchir la liste des produits
+            chargerProduits("");
         }
     }
 
