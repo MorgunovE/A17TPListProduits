@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">A17TPProductList</string>
+    <string name="list_details">List details</string>
+    <string name="error_empty_name">Name cannot be empty</string>
+    <string name="error_copying_list">Error copying list</string>
+    <string name="list_detail">List details</string>
+    <string name="enter_quantity">Enter quantity</string>
+    <string name="list_copied">List copied successfully</string>
+    <string name="no_products">No products in this list</string>
+    <string name="error_loading_list">Error loading list</string>
+    <string name="add_product_to_list">Add to list</string>
+    <string name="product_added_success">Product added successfully</string>
+    <string name="error_adding_product">Error adding product</string>
+    <string name="product_name_required">Product name required</string>
+    <string name="quantity_required">Quantity required</string>
+    <string name="unit_required">Unit required</string>
+    <string name="price_required">Price required</string>
+    <string name="invalid_price">Invalid price</string>
+    <string name="product_created_success">Product created successfully</string>
+    <string name="product_creation_error">Error creating product</string>
+    <string name="product_added_to_list_success">Product added to list successfully</string>
+    <string name="product_add_to_list_error">Error adding product to list</string>
 
     <!-- Auth strings -->
     <string name="login_title">Login</string>
