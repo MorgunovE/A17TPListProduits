@@ -75,7 +75,7 @@ public class RegisterActivity extends AppCompatActivity {
         String password = editTextPassword.getText().toString();
         String confirmPassword = editTextConfirmPassword.getText().toString();
 
-        // Validate inputs
+        // Validate inputs (unchanged validation code)
         if (name.isEmpty()) {
             editTextName.setError(getString(R.string.name_required));
             editTextName.requestFocus();
@@ -110,56 +110,62 @@ public class RegisterActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         buttonRegister.setEnabled(false);
 
-        // Send registration request
-        try {
-            ApiClient.ApiResponse<Boolean> response = apiClient.register(name, email, password).get();
-
-            if (response.isSuccess()) {
-                // Login after successful registration
-                loginUser(email, password);
-            } else {
-                Toast.makeText(this,
-                    getString(R.string.registration_failed) + ": " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
-                progressBar.setVisibility(View.GONE);
-                buttonRegister.setEnabled(true);
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(this,
-                getString(R.string.network_error) + ": " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
-            progressBar.setVisibility(View.GONE);
-            buttonRegister.setEnabled(true);
-        }
+        // Send registration request with better error handling
+        apiClient.register(name, email, password)
+            .thenAccept(response -> runOnUiThread(() -> {
+                if (response.isSuccess()) {
+                    // Login after successful registration
+                    loginUser(email, password);
+                } else {
+                    Toast.makeText(RegisterActivity.this,
+                        getString(R.string.registration_failed) + ": " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
+                    progressBar.setVisibility(View.GONE);
+                    buttonRegister.setEnabled(true);
+                }
+            }))
+            .exceptionally(e -> {
+                runOnUiThread(() -> {
+                    Toast.makeText(RegisterActivity.this,
+                        getString(R.string.network_error) + ": " + e.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                    progressBar.setVisibility(View.GONE);
+                    buttonRegister.setEnabled(true);
+                });
+                return null;
+            });
     }
 
     private void loginUser(String email, String password) {
-        try {
-            ApiClient.ApiResponse<String> response = apiClient.login(email, password).get();
+        apiClient.login(email, password)
+            .thenAccept(response -> runOnUiThread(() -> {
+                if (response.isSuccess() && response.getData() != null) {
+                    // Save token and user info
+                    sessionManager.saveAuthToken(response.getData());
 
-            if (response.isSuccess() && response.getData() != null) {
-                // Save token and user info
-                sessionManager.saveAuthToken(response.getData());
-
-                // Navigate to lists activity
-                Intent intent = new Intent(RegisterActivity.this, ListsActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
-            } else {
-                Toast.makeText(this,
-                    getString(R.string.registration_success_login_failed) + ": " + response.getErrorMessage(),
-                    Toast.LENGTH_LONG).show();
-                progressBar.setVisibility(View.GONE);
-                buttonRegister.setEnabled(true);
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            Toast.makeText(this,
-                getString(R.string.network_error) + ": " + e.getMessage(),
-                Toast.LENGTH_LONG).show();
-            progressBar.setVisibility(View.GONE);
-            buttonRegister.setEnabled(true);
-        }
+                    // Navigate to lists activity
+                    Intent intent = new Intent(RegisterActivity.this, ListsActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Toast.makeText(RegisterActivity.this,
+                        getString(R.string.registration_success_login_failed) + ": " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
+                    progressBar.setVisibility(View.GONE);
+                    buttonRegister.setEnabled(true);
+                }
+            }))
+            .exceptionally(e -> {
+                runOnUiThread(() -> {
+                    Toast.makeText(RegisterActivity.this,
+                        getString(R.string.network_error) + ": " + e.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                    progressBar.setVisibility(View.GONE);
+                    buttonRegister.setEnabled(true);
+                });
+                return null;
+            });
     }
 
     @Override
