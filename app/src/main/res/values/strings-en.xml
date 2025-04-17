@@ -38,4 +38,12 @@
     <string name="add_product">Add product</string>
     <string name="search_products">Search products</string>
     <string name="product_details">Product details</string>
+    <string name="product_not_found">Produit non trouvé</string>
+    <string name="add_to_list">Ajouter à une liste</string>
+    <string name="select_list">Sélectionner une liste</string>
+    <string name="cancel">Annuler</string>
+    <string name="add">Ajouter</string>
+    <string name="quantity_for">Quantité de %1$s</string>
+    <string name="invalid_quantity">Quantité invalide</string>
+    <string name="product_added_to_list">Produit ajouté à la liste</string>
 </resources>
