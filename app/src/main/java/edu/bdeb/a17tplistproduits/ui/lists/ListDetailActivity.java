@@ -106,6 +106,9 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
             ApiClient.ApiResponse<ProductList> response = apiClient.getList(listId).get();
 
             if (response.isSuccess() && response.getData() != null) {
+                currentList = convertStringToProductList(response.getData());
+
+
                 currentList = response.getData();
                 mettreAJourInterface();
                 chargerProduitsDeLaListe();
@@ -121,6 +124,9 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
                 Toast.LENGTH_LONG).show();
             finish();
         }
+    }
+
+    private ProductList convertStringToProductList(String data) {
     }
 
     private void mettreAJourInterface() {
