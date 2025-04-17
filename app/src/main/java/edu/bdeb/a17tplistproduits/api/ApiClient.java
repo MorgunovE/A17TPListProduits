@@ -9,13 +9,19 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 import edu.bdeb.a17tplistproduits.model.Product;
 import edu.bdeb.a17tplistproduits.model.ProductList;
@@ -27,15 +33,18 @@ public class ApiClient {
     private static final String BASE_URL = "http://10.0.2.2:5000"; // Emulator localhost
 
     private final SessionManager sessionManager;
+    private final ExecutorService executorService;
 
     public ApiClient(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
+        this.executorService = Executors.newFixedThreadPool(4); // Create a thread pool with 4 threads
+
     }
 
     public static class ApiResponse<T> {
-        private final T data;
-        private final boolean success;
-        private final String errorMessage;
+        private T data;
+        private boolean success;
+        private String errorMessage;
 
         public ApiResponse(T data) {
             this.data = data;
@@ -43,10 +52,20 @@ public class ApiClient {
             this.errorMessage = null;
         }
 
+        public ApiResponse(boolean success, T data, String errorMessage) {
+            this.success = success;
+            this.data = data;
+            this.errorMessage = errorMessage;
+        }
+
         public ApiResponse(String errorMessage) {
             this.data = null;
             this.success = false;
             this.errorMessage = errorMessage;
+        }
+
+        public ApiResponse() {
+
         }
 
         public T getData() {
@@ -60,45 +79,165 @@ public class ApiClient {
         public String getErrorMessage() {
             return errorMessage;
         }
+
+        public void setSuccess(boolean b) {
+            this.success = b;
+        }
+
+        public void setData(T token) {
+            this.data = token;
+        }
+
+        public void setErrorMessage(T noTokenInResponse) {
+            this.errorMessage = (String) noTokenInResponse;
+        }
     }
 
     // Authentication methods
-    public CompletableFuture<ApiResponse<String>> login(String username, String password) {
-        CompletableFuture<ApiResponse<String>> future = new CompletableFuture<>();
+//    public CompletableFuture<ApiResponse<String>> login(String username, String password) {
+//        CompletableFuture<ApiResponse<String>> future = new CompletableFuture<>();
+//
+//        new AsyncTask<Void, Void, ApiResponse<String>>() {
+//            @Override
+//            protected ApiResponse<String> doInBackground(Void... voids) {
+//                try {
+//                    JSONObject jsonBody = new JSONObject();
+//                    jsonBody.put("username", username);
+//                    jsonBody.put("password", password);
+//
+//                    String jsonResponse = performRequest(BASE_URL + "/connexion", "POST",
+//                            jsonBody.toString(), null);
+//
+//                    Log.d(TAG, "Login raw response: " + jsonResponse);
+//
+//                    JSONObject response = new JSONObject(jsonResponse);
+//
+//                    if (response.has("access_token")) {
+//                        String token = response.getString("access_token");
+//                        Log.d(TAG, "Login successful with token: " + token.substring(0, 15) + "...");
+//                        return new ApiResponse<>(token);
+//                    } else if (response.has("erreur")) {
+//                        String errorMsg = response.getString("erreur");
+//                        Log.d(TAG, "Login response with erreur: " + errorMsg);
+//
+//                        // Check if the "error" is actually a JWT token
+//                        if (errorMsg.startsWith("eyJ")) {
+//                            Log.w(TAG, "API inconsistency: received token in error field");
+//                            // You could potentially return a success response here instead
+//                            return new ApiResponse<>(errorMsg);
+//                        }
+//
+//                        return new ApiResponse<>(errorMsg);
+//                    } else {
+//                        Log.e(TAG, "Login response has neither access_token nor erreur");
+//                        return new ApiResponse<>("Unknown error occurred");
+//                    }
+//                } catch (Exception e) {
+//                    Log.e(TAG, "Login error", e);
+//                    return new ApiResponse<>(e.getMessage());
+//                }
+//            }
+//
+//            @Override
+//            protected void onPostExecute(ApiResponse<String> result) {
+//                Log.d(TAG, "Login completed, success: " + result.isSuccess() +
+//                      ", has data: " + (result.getData() != null) +
+//                      ", error: " + result.getErrorMessage());
+//                future.complete(result);
+//            }
+//        }.execute();
+//
+//        return future;
+//    }
 
-        new AsyncTask<Void, Void, ApiResponse<String>>() {
-            @Override
-            protected ApiResponse<String> doInBackground(Void... voids) {
-                try {
-                    JSONObject jsonBody = new JSONObject();
-                    jsonBody.put("username", username);
-                    jsonBody.put("password", password);
+    public Future<ApiResponse<String>> login(String username, String password) {
+        FutureTask<ApiResponse<String>> future = new FutureTask<>(() -> {
+            ApiResponse<String> result = new ApiResponse<>();
+            try {
+                // Create request body with email and password
+                JSONObject jsonBody = new JSONObject();
+                jsonBody.put("username", username);
+                jsonBody.put("password", password);
 
-                    String jsonResponse = performRequest(BASE_URL + "/connexion", "POST",
-                            jsonBody.toString(), null);
-                    JSONObject response = new JSONObject(jsonResponse);
+                URL url = new URL(BASE_URL + "/connexion");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                // Setup connection
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
 
-                    if (response.has("access_token")) {
-                        return new ApiResponse<>(response.getString("access_token"));
-                    } else if (response.has("erreur")) {
-                        return new ApiResponse<>(response.getString("erreur"));
-                    } else {
-                        return new ApiResponse<>("Unknown error occurred");
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Login error", e);
-                    return new ApiResponse<>(e.getMessage());
+                // Write request body
+                try (OutputStream os = connection.getOutputStream()) {
+                    byte[] input = jsonBody.toString().getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
                 }
-            }
 
-            @Override
-            protected void onPostExecute(ApiResponse<String> result) {
-                future.complete(result);
-            }
-        }.execute();
+                int responseCode = connection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    // Read successful response
+                    String response = readInputStream(connection.getInputStream());
+                    Log.d(TAG, "Login raw response: " + response);
 
+                    // Parse the JSON response
+                    JSONObject jsonResponse = new JSONObject(response);
+                    if (jsonResponse.has("access_token")) {
+                        String token = jsonResponse.getString("access_token");
+                        Log.d(TAG, "Login successful with token: " + token.substring(0, 15) + "...");
+                        result.setSuccess(true);
+                        result.setData(token);
+                    } else if (response.startsWith("eyJ")) {
+                        // Direct token in response
+                        Log.d(TAG, "Login successful with direct token: " + response.substring(0, 15) + "...");
+                        result.setSuccess(true);
+                        result.setData(response);
+                    } else {
+                        result.setSuccess(false);
+                        result.setErrorMessage("No token in response");
+                    }
+                } else {
+                    // Handle error response
+                    String errorResponse = readInputStream(connection.getErrorStream());
+                    Log.e(TAG, "Login failed with code: " + responseCode + ", response: " + errorResponse);
+
+                    // Check if error response is actually a JWT token
+                    if (errorResponse != null && errorResponse.startsWith("eyJ")) {
+                        Log.d(TAG, "Found token in error response: " + errorResponse.substring(0, 15) + "...");
+                        result.setSuccess(true);
+                        result.setData(errorResponse);
+                    } else {
+                        result.setSuccess(false);
+                        result.setErrorMessage(errorResponse);
+                    }
+                }
+                connection.disconnect();
+            } catch (Exception e) {
+                Log.e(TAG, "Exception during login: " + e.getMessage());
+                result.setSuccess(false);
+                result.setErrorMessage(e.getMessage());
+            }
+            Log.d(TAG, "Login completed, success: " + result.isSuccess() +
+                  ", has data: " + (result.getData() != null) +
+                  (result.isSuccess() ? "" : ", error: " + result.getErrorMessage()));
+            return result;
+        });
+
+        executorService.submit(future);
         return future;
     }
+
+    private String readInputStream(InputStream inputStream) {
+        StringBuilder response = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error reading input stream: " + e.getMessage());
+        }
+        return response.toString();
+    }
+
 
     public CompletableFuture<ApiResponse<Boolean>> register(String username, String password, String email) {
         CompletableFuture<ApiResponse<Boolean>> future = new CompletableFuture<>();
