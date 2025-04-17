@@ -12,6 +12,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.concurrent.ExecutionException;
+
 import edu.bdeb.a17tplistproduits.R;
 import edu.bdeb.a17tplistproduits.api.ApiClient;
 import edu.bdeb.a17tplistproduits.ui.lists.ListsActivity;
@@ -19,7 +21,7 @@ import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText editTextEmail;
+    private EditText editTextUsername;
     private EditText editTextPassword;
     private Button buttonLogin;
     private TextView textViewRegister;
@@ -38,7 +40,7 @@ public class LoginActivity extends AppCompatActivity {
         apiClient = new ApiClient(sessionManager);
 
         // Initialize views
-        editTextEmail = findViewById(R.id.editTextUsername);
+        editTextUsername = findViewById(R.id.editTextUsername);
         editTextPassword = findViewById(R.id.editTextPassword);
         buttonLogin = findViewById(R.id.buttonLogin);
         textViewRegister = findViewById(R.id.textViewRegister);
@@ -54,13 +56,13 @@ public class LoginActivity extends AppCompatActivity {
 
     private void loginUser() {
         // Get input values
-        String email = editTextEmail.getText().toString().trim();
+        String name = editTextUsername.getText().toString().trim();
         String password = editTextPassword.getText().toString();
 
         // Validate inputs
-        if (email.isEmpty()) {
-            editTextEmail.setError(getString(R.string.email_required));
-            editTextEmail.requestFocus();
+        if (name.isEmpty()) {
+            editTextUsername.setError(getString(R.string.email_required));
+            editTextUsername.requestFocus();
             return;
         }
 
@@ -74,53 +76,47 @@ public class LoginActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         buttonLogin.setEnabled(false);
 
-        // Send login request asynchronously without blocking the UI thread
-        apiClient.login(email, password)
-                .thenAccept(response -> {
-                    runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
-                        buttonLogin.setEnabled(true);
+        // Send login request using a background thread
+        new Thread(() -> {
+            try {
+                // Get the result from the Future
+                ApiClient.ApiResponse<String> response = apiClient.login(name, password).get();
 
-                        // Check if response data contains token
-                        String token = null;
-                        if (response.isSuccess() && response.getData() != null) {
-                            token = response.getData();
-                        }
-                        // If not successful but error message looks like a JWT token
-                        else if (response.getErrorMessage() != null &&
-                                response.getErrorMessage().startsWith("eyJ")) {
-                            token = response.getErrorMessage();
-                        }
+                // Update UI on the main thread
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    buttonLogin.setEnabled(true);
 
-                        if (token != null) {
-                            // Save token and navigate to lists activity
-                            sessionManager.saveAuthToken(token);
-                            Log.d("LoginActivity", "Token: " + token);
-                            Log.e("LoginActivity", "Response: " + response.getErrorMessage());
+                    // Check for successful login
+                    if (response.isSuccess() && response.getData() != null) {
+                        String token = response.getData();
+                        // Save token and navigate to lists activity
+                        sessionManager.saveAuthToken(token);
+                        Log.d("LoginActivity", "Token: " + token.substring(0, 15) + "...");
 
-                            Intent intent = new Intent(LoginActivity.this, ListsActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(intent);
-                            finish();
-                        } else {
-                            // Show error message
-                            Toast.makeText(LoginActivity.this,
-                                    getString(R.string.login_failed) + ": " + response.getErrorMessage(),
-                                    Toast.LENGTH_LONG).show();
-                            Log.e("LoginActivity", "Login failed: " + response.getErrorMessage());
-                        }
-                    });
-                })
-                .exceptionally(e -> {
-                    runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
-                        buttonLogin.setEnabled(true);
+                        Intent intent = new Intent(LoginActivity.this, ListsActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        // Show error message
                         Toast.makeText(LoginActivity.this,
-                                getString(R.string.network_error) + ": " + e.getMessage(),
+                                getString(R.string.login_failed) + ": " + response.getErrorMessage(),
                                 Toast.LENGTH_LONG).show();
-                        Log.e("LoginActivity", "Network error: " + e.getMessage());
-                    });
-                    return null;
+                        Log.e("LoginActivity", "Login failed: " + response.getErrorMessage());
+                    }
                 });
+            } catch (ExecutionException | InterruptedException e) {
+                // Handle exceptions from Future.get()
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    buttonLogin.setEnabled(true);
+                    Toast.makeText(LoginActivity.this,
+                            getString(R.string.network_error) + ": " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                    Log.e("LoginActivity", "Network error: " + e.getMessage(), e);
+                });
+            }
+        }).start();
     }
 }
