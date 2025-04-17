@@ -92,7 +92,11 @@
 
     <string name="full_name">full name</string>
     <string name="login_failed">login failed</string>
-    <string name="password_length">password_length</string>
+    <string name="password_length">Longueur du mot de passe</string>
+    <string name="password_min_length">Longueur minimale du mot de passe</string>
+    <string name="passwords_dont_match">Les mots de passe ne correspondent pas</string>
+    <string name="registration_successful">Inscription réussie</string>
+    <string name="login_after_registration_failed">Inscription réussie, mais échec de la connexion</string>
 
 
 </resources>
