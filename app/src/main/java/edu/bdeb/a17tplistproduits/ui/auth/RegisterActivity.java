@@ -112,7 +112,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         // Send registration request
         try {
-            ApiClient.ApiResponse<String> response = apiClient.register(name, email, password).get();
+            ApiClient.ApiResponse<Boolean> response = apiClient.register(name, email, password).get();
 
             if (response.isSuccess()) {
                 // Login after successful registration
