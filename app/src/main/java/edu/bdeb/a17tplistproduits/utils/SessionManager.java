@@ -15,7 +15,6 @@ public class SessionManager {
     private static final String KEY_IS_LOGGED_IN = "is_logged_in";
     private static final int PRIVATE_MODE = Context.MODE_PRIVATE;
 
-
     private SharedPreferences pref;
     private SharedPreferences.Editor editor;
     private Context context;
@@ -109,5 +108,31 @@ public class SessionManager {
         Intent intent = new Intent(context, LoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
+    }
+
+    /**
+     * Save authentication token to shared preferences
+     * @param token The JWT token to save
+     */
+    public void saveAuthToken(String token) {
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(KEY_AUTH_TOKEN, token);
+        editor.apply();
+    }
+
+    /**
+     * Save user ID to shared preferences
+     * @param userId The user ID to save
+     */
+    public void saveUserId(String userId) {
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(KEY_USER_ID, userId);
+        editor.apply();
+    }
+
+    public void saveUsername(String username) {
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(KEY_USERNAME, username);
+        editor.apply();
     }
 }
