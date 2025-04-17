@@ -20,6 +20,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -127,6 +131,54 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
     }
 
     private ProductList convertStringToProductList(String data) {
+        try {
+            JSONObject jsonObject = new JSONObject(data);
+            ProductList productList = new ProductList();
+
+            productList.setId(jsonObject.getString("_id"));
+            productList.setNom(jsonObject.getString("nom"));
+
+            if (!jsonObject.isNull("description")) {
+                productList.setDescription(jsonObject.getString("description"));
+            }
+
+            if (!jsonObject.isNull("produits") && jsonObject.has("produits")) {
+                JSONArray produitsArray = jsonObject.getJSONArray("produits");
+                List<Product> products = new ArrayList<>();
+
+                for (int i = 0; i < produitsArray.length(); i++) {
+                    JSONObject produitObject = produitsArray.getJSONObject(i);
+                    Product product = new Product();
+
+                    // Check if produit has reference to a product document
+                    if (produitObject.has("produit") && !produitObject.isNull("produit")) {
+                        JSONObject produitDetails = produitObject.getJSONObject("produit");
+                        product.setId(produitDetails.getString("_id"));
+                        product.setNom(produitDetails.getString("nom"));
+                        product.setUnite(produitDetails.getString("unite"));
+                        product.setPrix(produitDetails.getDouble("prix"));
+
+                        if (!produitDetails.isNull("description")) {
+                            product.setDescription(produitDetails.getString("description"));
+                        }
+                    }
+
+                    // Get the quantity from the list item
+                    if (produitObject.has("quantite")) {
+                        product.setQuantite(produitObject.getDouble("quantite"));
+                    }
+
+                    products.add(product);
+                }
+
+                productList.setProduits(products);
+            }
+
+            return productList;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private void mettreAJourInterface() {
