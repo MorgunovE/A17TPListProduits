@@ -25,6 +25,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     public interface OnProductClickListener {
         void onProductClick(Product product);
         void onDeleteProductClick(Product product);
+        void onEditProductClick(Product product);
     }
 
     public ProductAdapter(List<Product> products, OnProductClickListener listener) {
@@ -56,6 +57,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         private final TextView textViewProductQuantity;
         private final TextView textViewProductPrice;
         private final ImageButton buttonDeleteProduct;
+        private final ImageButton buttonEditProduct;
 
 
         public ViewHolder(@NonNull View itemView) {
@@ -64,6 +66,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
             textViewProductQuantity = itemView.findViewById(R.id.textViewProductQuantity);
             textViewProductPrice = itemView.findViewById(R.id.textViewProductPrice);
             buttonDeleteProduct = itemView.findViewById(R.id.buttonDeleteProduct);
+            buttonEditProduct = itemView.findViewById(R.id.buttonEditProduct);
+
         }
 
         public void bind(Product product, OnProductClickListener listener) {
@@ -77,7 +81,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
             itemView.setOnClickListener(v -> listener.onProductClick(product));
             buttonDeleteProduct.setOnClickListener(v -> listener.onDeleteProductClick(product));
-
+            buttonEditProduct.setOnClickListener(v -> listener.onEditProductClick(product));
         }
     }
 }
