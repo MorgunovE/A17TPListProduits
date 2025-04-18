@@ -1,5 +1,7 @@
 package edu.bdeb.a17tplistproduits.ui.lists;
 
+import static edu.bdeb.a17tplistproduits.ui.products.ProductDetailActivity.REQUEST_EDIT_PRODUCT;
+
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -33,6 +35,7 @@ import edu.bdeb.a17tplistproduits.adapters.ProductAdapter;
 import edu.bdeb.a17tplistproduits.api.ApiClient;
 import edu.bdeb.a17tplistproduits.model.Product;
 import edu.bdeb.a17tplistproduits.model.ProductList;
+import edu.bdeb.a17tplistproduits.ui.products.AddProductActivity;
 import edu.bdeb.a17tplistproduits.ui.products.ProductDetailActivity;
 import edu.bdeb.a17tplistproduits.ui.products.ProductsActivity;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
@@ -40,6 +43,7 @@ import edu.bdeb.a17tplistproduits.utils.SessionManager;
 public class ListDetailActivity extends AppCompatActivity implements ProductAdapter.OnProductClickListener {
 
     private static final int REQUEST_ADD_PRODUCT = 1;
+    private static final int REQUEST_EDIT_PRODUCT = 1;
 
     private ApiClient apiClient;
     private SessionManager sessionManager;
@@ -321,6 +325,14 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
             .setPositiveButton(R.string.delete, (dialog, which) -> deleteProductFromList(product))
             .setNegativeButton(R.string.cancel, null)
             .show();
+    }
+
+    @Override
+    public void onEditProductClick(Product product) {
+        Intent intent = new Intent(this, AddProductActivity.class);
+        intent.putExtra("product_id", product.getId());
+        intent.putExtra("is_edit_mode", true);
+        startActivityForResult(intent, REQUEST_EDIT_PRODUCT);
     }
 
     private void deleteProductFromList(Product product) {
