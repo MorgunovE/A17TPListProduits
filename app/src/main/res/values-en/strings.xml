@@ -119,4 +119,6 @@
     <string name="quantity_updated">Quantity updated</string>
     <string name="update_failed">Update failed</string>
 
+    <string name="add_product_error">add product error</string>
+
 </resources>

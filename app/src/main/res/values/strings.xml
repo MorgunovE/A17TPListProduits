@@ -115,6 +115,7 @@
     <string name="save">Sauvegarder</string>
     <string name="quantity_updated">Quantité mise à jour</string>
     <string name="update_failed">Échec de la mise à jour</string>
+    <string name="add_product_error">add product error</string>
 
 
 </resources>
