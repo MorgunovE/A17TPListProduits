@@ -56,7 +56,7 @@ public class LoginActivity extends AppCompatActivity {
         String password = editTextPassword.getText().toString();
 
         if (name.isEmpty()) {
-            editTextUsername.setError(getString(R.string.email_required));
+            editTextUsername.setError(getString(R.string.username_required));
             editTextUsername.requestFocus();
             return;
         }
