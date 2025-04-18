@@ -67,14 +67,6 @@
     <string name="add_product">Add product</string>
     <string name="search_products">Search products</string>
     <string name="product_details">Product details</string>
-    <string name="product_not_found">Produit non trouvé</string>
-    <string name="add_to_list">Ajouter à une liste</string>
-    <string name="select_list">Sélectionner une liste</string>
-    <string name="cancel">Annuler</string>
-    <string name="add">Ajouter</string>
-    <string name="quantity_for">Quantité de %1$s</string>
-    <string name="invalid_quantity">Quantité invalide</string>
-    <string name="product_added_to_list">Produit ajouté à la liste</string>
 
     <string name="register">Register</string>
     <string name="username">Username</string>
@@ -132,5 +124,14 @@
     <string name="default_unit">default unit</string>
     <string name="product_quantity_required">product quantity required</string>
     <string name="product_update_error">product update error</string>
+
+    <string name="product_not_found">Product not found</string>
+    <string name="add_to_list">Add to a list</string>
+    <string name="select_list">Select a list</string>
+    <string name="cancel">Cancel</string>
+    <string name="add">Add</string>
+    <string name="quantity_for">Quantity for %1$s</string>
+    <string name="invalid_quantity">Invalid quantity</string>
+    <string name="product_added_to_list">Product added to the list</string>
 
 </resources>

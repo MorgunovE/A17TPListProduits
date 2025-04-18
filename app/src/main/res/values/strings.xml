@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">Liste de Courses</string>
 
-    <!-- Auth strings -->
     <string name="login_title">Connexion</string>
     <string name="username_hint">Nom d\'utilisateur</string>
     <string name="password_hint">Mot de passe</string>
@@ -17,7 +16,6 @@
     <string name="error_empty_name">Le nom ne peut pas être vide</string>
     <string name="logout">Déconnexion</string>
 
-    <!-- Main app strings -->
     <string name="product_lists">Mes Listes</string>
     <string name="add_list">Ajouter une liste</string>
     <string name="no_lists">Aucune liste trouvée</string>
@@ -40,11 +38,7 @@
     <string name="product_added_to_list">Produit ajouté à la liste</string>
     <string name="copy">Copier</string>
     <string name="list_copied">Liste copiée avec succès</string>
-    <string name="list_name_required">List name is required</string>
-    <string name="list_created_success">List created successfully</string>
-    <string name="list_creation_error">Error creating list</string>
 
-    <!-- Product strings -->
     <string name="product_name">Nom du produit</string>
     <string name="product_quantity">Quantité</string>
     <string name="product_unit">Unité</string>
@@ -90,18 +84,6 @@
     <string name="registration_failed">Échec de l\'inscription</string>
     <string name="registration_success_login_failed">Inscription réussie, mais échec de la connexion</string>
 
-    <string name="full_name">full name</string>
-    <string name="login_failed">login failed</string>
-    <string name="password_length">Longueur du mot de passe</string>
-    <string name="password_min_length">Longueur minimale du mot de passe</string>
-    <string name="passwords_dont_match">Les mots de passe ne correspondent pas</string>
-    <string name="registration_successful">Inscription réussie</string>
-    <string name="login_after_registration_failed">Inscription réussie, mais échec de la connexion</string>
-    <string name="username_required">nom d\'utilisateur requis</string>
-    <string name="valid_email_required">courriel valide requis</string>
-    <string name="password_too_short">mot de passe trop court</string>
-    <string name="registration_success">inscription réussie</string>
-    <string name="auto_login_failed">échec de la connexion automatique</string>
 
     <string name="delete_product">Supprimer le produit</string>
     <string name="confirm_delete">Confirmer la suppression</string>
@@ -110,24 +92,44 @@
     <string name="product_deleted">Produit supprimé avec succès</string>
     <string name="delete_failed">Échec de la suppression</string>
 
-    <string name="error_loading_products">error loading products</string>
 
     <string name="save">Sauvegarder</string>
     <string name="quantity_updated">Quantité mise à jour</string>
-    <string name="add_product_error">add product error</string>
     <string name="update_product">Mettre à jour</string>
     <string name="product_updated_success">Produit mis à jour avec succès</string>
     <string name="update_failed">Échec de la mise à jour</string>
-    <string name="edit_product">edit product</string>
-    <string name="error_loading_product">error loading product</string>
-    <string name="product_price_required">product price required</string>
-    <string name="product_unit_required">product unit required</string>
-    <string name="product_updated">product updated</string>
-    <string name="product_created">product created</string>
-    <string name="creation_failed">creation failed</string>
-    <string name="default_unit">default unit</string>
-    <string name="product_quantity_required">product quantity required</string>
-    <string name="product_update_error">product update error</string>
+    <string name="list_name_required">Le nom de la liste est requis</string>
+    <string name="list_created_success">Liste créée avec succès</string>
+    <string name="list_creation_error">Erreur lors de la création de la liste</string>
+
+    <string name="full_name">Nom complet</string>
+    <string name="login_failed">Échec de la connexion</string>
+    <string name="password_length">Longueur du mot de passe</string>
+    <string name="password_min_length">Longueur minimale du mot de passe</string>
+    <string name="passwords_dont_match">Les mots de passe ne correspondent pas</string>
+    <string name="registration_successful">Inscription réussie</string>
+    <string name="login_after_registration_failed">Inscription réussie, mais échec de la connexion</string>
+    <string name="username_required">Nom d'utilisateur requis</string>
+    <string name="valid_email_required">Courriel valide requis</string>
+    <string name="password_too_short">Mot de passe trop court</string>
+    <string name="registration_success">Inscription réussie</string>
+    <string name="auto_login_failed">Échec de la connexion automatique</string>
+
+    <string name="error_loading_products">Erreur lors du chargement des produits</string>
+
+    <string name="add_product_error">Erreur lors de l'ajout du produit</string>
+    <string name="edit_product">Modifier le produit</string>
+    <string name="error_loading_product">Erreur lors du chargement du produit</string>
+    <string name="product_price_required">Prix du produit requis</string>
+    <string name="product_unit_required">Unité du produit requise</string>
+    <string name="product_updated">Produit mis à jour</string>
+    <string name="product_created">Produit créé</string>
+    <string name="creation_failed">Échec de la création</string>
+    <string name="default_unit">Unité par défaut</string>
+    <string name="product_quantity_required">Quantité du produit requise</string>
+    <string name="product_update_error">Erreur lors de la mise à jour du produit</string>
+
+
 
 
 </resources>
