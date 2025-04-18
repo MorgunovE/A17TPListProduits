@@ -103,5 +103,14 @@
     <string name="registration_success">inscription réussie</string>
     <string name="auto_login_failed">échec de la connexion automatique</string>
 
+    <string name="delete_product">Supprimer le produit</string>
+    <string name="confirm_delete">Confirmer la suppression</string>
+    <string name="confirm_delete_product">Voulez-vous supprimer %1$s ?</string>
+    <string name="delete">Supprimer</string>
+    <string name="product_deleted">Produit supprimé avec succès</string>
+    <string name="delete_failed">Échec de la suppression</string>
+
+    <string name="error_loading_products">error loading products</string>
+
 
 </resources>
