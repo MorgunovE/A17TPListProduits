@@ -97,6 +97,11 @@
     <string name="passwords_dont_match">Les mots de passe ne correspondent pas</string>
     <string name="registration_successful">Inscription réussie</string>
     <string name="login_after_registration_failed">Inscription réussie, mais échec de la connexion</string>
+    <string name="username_required">nom d\'utilisateur requis</string>
+    <string name="valid_email_required">courriel valide requis</string>
+    <string name="password_too_short">mot de passe trop court</string>
+    <string name="registration_success">inscription réussie</string>
+    <string name="auto_login_failed">échec de la connexion automatique</string>
 
 
 </resources>
