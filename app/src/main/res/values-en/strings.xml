@@ -106,4 +106,13 @@
     <string name="registration_successful">Registration successful</string>
     <string name="login_after_registration_failed">Registration successful, but login failed</string>
 
+    <string name="delete_product">Delete product</string>
+    <string name="confirm_delete">Confirm deletion</string>
+    <string name="confirm_delete_product">Do you want to delete %1$s?</string>
+    <string name="delete">Delete</string>
+    <string name="product_deleted">Product deleted successfully</string>
+    <string name="delete_failed">Failed to delete</string>
+
+    <string name="error_loading_products">error loading products</string>
+
 </resources>
