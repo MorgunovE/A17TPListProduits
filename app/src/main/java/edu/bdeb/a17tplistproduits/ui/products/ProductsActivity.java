@@ -1,5 +1,6 @@
 package edu.bdeb.a17tplistproduits.ui.products;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -42,6 +43,8 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
     private ProductAdapter adapter;
     private List<Product> productList;
     private String listId; // ID de la liste où ajouter les produits (si applicable)
+
+    private List<Product> products;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,6 +129,7 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
         }
     }
 
+
     private void chargerProduits(String query) {
         progressBar.setVisibility(View.VISIBLE);
 
@@ -188,6 +192,78 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
             Intent intent = new Intent(this, ProductDetailActivity.class);
             intent.putExtra("product_id", product.getId());
             startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onDeleteProductClick(Product product) {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.confirm_delete)
+            .setMessage(getString(R.string.confirm_delete_product, product.getNom()))
+            .setPositiveButton(R.string.delete, (dialog, which) -> deleteProduct(product))
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
+    private void deleteProduct(Product product) {
+        progressBar.setVisibility(View.VISIBLE);
+
+        try {
+            ApiClient.ApiResponse<Boolean> response = apiClient.deleteProduct(product.getId()).get();
+
+            if (response.isSuccess() && Boolean.TRUE.equals(response.getData())) {
+                Toast.makeText(this, R.string.product_deleted, Toast.LENGTH_SHORT).show();
+                // Refresh the product list
+                loadProducts();
+            } else {
+                Toast.makeText(this,
+                    getString(R.string.delete_failed) + ": " + response.getErrorMessage(),
+                    Toast.LENGTH_LONG).show();
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            Toast.makeText(this,
+                getString(R.string.network_error) + ": " + e.getMessage(),
+                Toast.LENGTH_LONG).show();
+        } finally {
+            progressBar.setVisibility(View.GONE);
+        }
+    }
+
+    private void loadProducts() {
+        progressBar.setVisibility(View.VISIBLE);
+        textViewNoProducts.setVisibility(View.GONE);
+        recyclerViewProducts.setVisibility(View.GONE);
+
+        try {
+            ApiClient.ApiResponse<List<Product>> response = apiClient.getProducts().get();
+
+            if (response.isSuccess() && response.getData() != null) {
+                products.clear();
+                products.addAll(response.getData());
+                adapter.notifyDataSetChanged();
+
+                if (products.isEmpty()) {
+                    textViewNoProducts.setVisibility(View.VISIBLE);
+                    recyclerViewProducts.setVisibility(View.GONE);
+                } else {
+                    textViewNoProducts.setVisibility(View.GONE);
+                    recyclerViewProducts.setVisibility(View.VISIBLE);
+                }
+            } else {
+                Toast.makeText(this,
+                        getString(R.string.error_loading_products) + ": " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
+                textViewNoProducts.setVisibility(View.VISIBLE);
+                recyclerViewProducts.setVisibility(View.GONE);
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            Toast.makeText(this,
+                    getString(R.string.network_error) + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+            textViewNoProducts.setVisibility(View.VISIBLE);
+            recyclerViewProducts.setVisibility(View.GONE);
+        } finally {
+            progressBar.setVisibility(View.GONE);
         }
     }
 
