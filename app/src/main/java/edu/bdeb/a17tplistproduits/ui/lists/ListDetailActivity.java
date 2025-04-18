@@ -274,6 +274,41 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
     }
 
     @Override
+    public void onDeleteProductClick(Product product) {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.confirm_delete)
+            .setMessage(getString(R.string.confirm_delete_product, product.getNom()))
+            .setPositiveButton(R.string.delete, (dialog, which) -> deleteProductFromList(product))
+            .setNegativeButton(R.string.cancel, null)
+            .show();
+    }
+
+    private void deleteProductFromList(Product product) {
+        progressBar.setVisibility(View.VISIBLE);
+
+        try {
+            ApiClient.ApiResponse<Boolean> response = apiClient.deleteProduct(product.getId()).get();
+
+            if (response.isSuccess() && Boolean.TRUE.equals(response.getData())) {
+                Toast.makeText(this, R.string.product_deleted, Toast.LENGTH_SHORT).show();
+                // Refresh the product list
+                chargerDetailsDeLaListe();
+            } else {
+                Toast.makeText(this,
+                    getString(R.string.delete_failed) + ": " + response.getErrorMessage(),
+                    Toast.LENGTH_LONG).show();
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            Toast.makeText(this,
+                getString(R.string.network_error) + ": " + e.getMessage(),
+                Toast.LENGTH_LONG).show();
+        } finally {
+            progressBar.setVisibility(View.GONE);
+        }
+    }
+
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ADD_PRODUCT && resultCode == RESULT_OK) {
