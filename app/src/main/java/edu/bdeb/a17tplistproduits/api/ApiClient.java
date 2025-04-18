@@ -317,6 +317,44 @@ public class ApiClient {
         });
     }
 
+    public Future<ApiResponse<Product>> updateProduct(String productId, Product product) {
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("nom", product.getNom());
+            jsonBody.put("quantite", product.getQuantite());
+            jsonBody.put("unite", product.getUnite());
+            jsonBody.put("prix", product.getPrix());
+
+            if (product.getDescription() != null && !product.getDescription().isEmpty()) {
+                jsonBody.put("description", product.getDescription());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return executorService.submit(new Callable<ApiResponse<Product>>() {
+            @Override
+            public ApiResponse<Product> call() {
+                try {
+                    HttpURLConnection connection = createConnection("/produits/" + productId, "PUT", true);
+                    writeBody(connection, jsonBody.toString());
+
+                    if (connection.getResponseCode() == 200) {
+                        JSONObject response = new JSONObject(readResponse(connection));
+                        Product updatedProduct = jsonToProduct(response);
+                        return new ApiResponse<>(updatedProduct, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Update product error", e);
+                    return new ApiResponse<>(null, e.getMessage(), false);
+                }
+            }
+        });
+    }
+
     public Future<ApiResponse<ProductList>> createList(ProductList list) {
         JSONObject jsonBody = new JSONObject();
         try {
