@@ -1,5 +1,7 @@
 package edu.bdeb.a17tplistproduits.ui.products;
 
+import static edu.bdeb.a17tplistproduits.ui.products.ProductDetailActivity.REQUEST_EDIT_PRODUCT;
+
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -242,6 +244,14 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
             .setPositiveButton(R.string.delete, (dialog, which) -> deleteProduct(product))
             .setNegativeButton(R.string.cancel, null)
             .show();
+    }
+
+    @Override
+    public void onEditProductClick(Product product) {
+        Intent intent = new Intent(this, AddProductActivity.class);
+        intent.putExtra("product_id", product.getId());
+        intent.putExtra("is_edit_mode", true);
+        startActivityForResult(intent, REQUEST_EDIT_PRODUCT);
     }
 
     private void deleteProduct(Product product) {
