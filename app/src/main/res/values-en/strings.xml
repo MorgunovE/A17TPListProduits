@@ -126,7 +126,7 @@
     <string name="select_list">Select a list</string>
     <string name="cancel">Cancel</string>
     <string name="add">Add</string>
-    <string name="quantity_for">Quantity</string>
+    <string name="quantity_for">Quantity for %1$s</string>
     <string name="invalid_quantity">Invalid quantity</string>
     <string name="product_added_to_list">Product added to the list</string>
 
