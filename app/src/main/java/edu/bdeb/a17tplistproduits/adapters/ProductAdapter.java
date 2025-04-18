@@ -3,6 +3,7 @@ package edu.bdeb.a17tplistproduits.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,6 +24,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
     public interface OnProductClickListener {
         void onProductClick(Product product);
+        void onDeleteProductClick(Product product);
     }
 
     public ProductAdapter(List<Product> products, OnProductClickListener listener) {
@@ -53,12 +55,15 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         private final TextView textViewProductName;
         private final TextView textViewProductQuantity;
         private final TextView textViewProductPrice;
+        private final ImageButton buttonDeleteProduct;
+
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewProductName = itemView.findViewById(R.id.textViewProductName);
             textViewProductQuantity = itemView.findViewById(R.id.textViewProductQuantity);
             textViewProductPrice = itemView.findViewById(R.id.textViewProductPrice);
+            buttonDeleteProduct = itemView.findViewById(R.id.buttonDeleteProduct);
         }
 
         public void bind(Product product, OnProductClickListener listener) {
@@ -71,6 +76,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
             textViewProductPrice.setText(currencyFormat.format(product.getPrix()));
 
             itemView.setOnClickListener(v -> listener.onProductClick(product));
+            buttonDeleteProduct.setOnClickListener(v -> listener.onDeleteProductClick(product));
+
         }
     }
 }
