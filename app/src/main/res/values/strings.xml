@@ -125,6 +125,9 @@
     <string name="product_updated">product updated</string>
     <string name="product_created">product created</string>
     <string name="creation_failed">creation failed</string>
+    <string name="default_unit">default unit</string>
+    <string name="product_quantity_required">product quantity required</string>
+    <string name="product_update_error">product update error</string>
 
 
 </resources>
