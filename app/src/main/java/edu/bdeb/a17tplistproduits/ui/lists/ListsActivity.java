@@ -49,33 +49,27 @@ public class ListsActivity extends AppCompatActivity implements ProductListAdapt
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lists);
 
-        // Initialize services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Initialize toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(R.string.product_lists);
         }
 
-        // Initialize views
         recyclerViewLists = findViewById(R.id.recyclerViewLists);
         textViewNoLists = findViewById(R.id.textViewNoLists);
         progressBar = findViewById(R.id.progressBar);
         fabAddList = findViewById(R.id.fabAddList);
 
-        // Setup RecyclerView
         recyclerViewLists.setLayoutManager(new LinearLayoutManager(this));
         productLists = new ArrayList<>();
         adapter = new ProductListAdapter(productLists, this);
         recyclerViewLists.setAdapter(adapter);
 
-        // Setup listeners
         fabAddList.setOnClickListener(v -> ouvrirEcranAjoutListe());
 
-        // Load lists
         chargerListes();
     }
 

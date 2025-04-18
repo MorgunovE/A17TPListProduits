@@ -31,18 +31,16 @@ public class AddProductActivity extends AppCompatActivity {
 
     private ApiClient apiClient;
     private SessionManager sessionManager;
-    private String listId; // ID de la liste où ajouter le produit (optionnel)
+    private String listId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_product);
 
-        // Initialiser les services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Initialiser les vues
         editTextProductName = findViewById(R.id.editTextProductName);
         editTextProductQuantity = findViewById(R.id.editTextProductQuantity);
         editTextProductUnit = findViewById(R.id.editTextProductUnit);
@@ -51,24 +49,20 @@ public class AddProductActivity extends AppCompatActivity {
         buttonAddProduct = findViewById(R.id.buttonAddProduct);
         progressBar = findViewById(R.id.progressBar);
 
-        // Récupérer l'ID de liste si fourni
         if (getIntent().hasExtra("list_id")) {
             listId = getIntent().getStringExtra("list_id");
         }
 
-        // Configurer l'écouteur du bouton
         buttonAddProduct.setOnClickListener(v -> ajouterProduit());
     }
 
     private void ajouterProduit() {
-        // Récupérer les valeurs saisies
         String nom = editTextProductName.getText().toString().trim();
         String quantiteStr = editTextProductQuantity.getText().toString().trim();
         String unite = editTextProductUnit.getText().toString().trim();
         String prixStr = editTextProductPrice.getText().toString().trim();
         String description = editTextProductDescription.getText().toString().trim();
 
-        // Valider les entrées
         if (nom.isEmpty()) {
             editTextProductName.setError("Le nom du produit est requis");
             editTextProductName.requestFocus();
@@ -112,7 +106,6 @@ public class AddProductActivity extends AppCompatActivity {
             return;
         }
 
-        // Créer l'objet Produit
         Product nouveauProduit = new Product();
         nouveauProduit.setNom(nom);
         nouveauProduit.setQuantite(quantite);
@@ -120,11 +113,9 @@ public class AddProductActivity extends AppCompatActivity {
         nouveauProduit.setPrix(prix);
         nouveauProduit.setDescription(description);
 
-        // Afficher la progression et désactiver le bouton
         progressBar.setVisibility(View.VISIBLE);
         buttonAddProduct.setEnabled(false);
 
-        // Envoyer la requête API
         try {
             ApiClient.ApiResponse<String> response = apiClient.createProduct(nouveauProduit).get();
 

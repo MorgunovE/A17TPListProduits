@@ -63,18 +63,15 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list_detail);
 
-        // Initialiser les services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Configurer la toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        // Initialiser les vues
         textViewListName = findViewById(R.id.textViewListName);
         textViewListDescription = findViewById(R.id.textViewListDescription);
         textViewProductsTitle = findViewById(R.id.textViewProductsTitle);
@@ -84,13 +81,11 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
         fabAddProduct = findViewById(R.id.fabAddProduct);
         buttonCopyList = findViewById(R.id.buttonCopyList);
 
-        // Configurer le RecyclerView
         recyclerViewProducts.setLayoutManager(new LinearLayoutManager(this));
         productList = new ArrayList<>();
         adapter = new ProductAdapter(productList, this);
         recyclerViewProducts.setAdapter(adapter);
 
-        // Récupérer l'ID de la liste
         if (getIntent().hasExtra("list_id")) {
             listId = getIntent().getStringExtra("list_id");
             chargerDetailsDeLaListe();
@@ -99,7 +94,6 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
             finish();
         }
 
-        // Configurer les écouteurs
         fabAddProduct.setOnClickListener(v -> ouvrirEcranAjoutProduit());
         buttonCopyList.setOnClickListener(v -> afficherDialogueCopierListe());
     }
@@ -111,7 +105,6 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
             ApiClient.ApiResponse<ProductList> response = apiClient.getList(listId).get();
 
             if (response.isSuccess() && response.getData() != null) {
-                // Remove the unnecessary conversion
                 currentList = response.getData();
                 mettreAJourInterface();
                 chargerProduitsDeLaListe();
@@ -149,7 +142,6 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
                     JSONObject produitObject = produitsArray.getJSONObject(i);
                     Product product = new Product();
 
-                    // Check if produit has reference to a product document
                     if (produitObject.has("produit") && !produitObject.isNull("produit")) {
                         JSONObject produitDetails = produitObject.getJSONObject("produit");
                         product.setId(produitDetails.getString("_id"));
@@ -162,7 +154,6 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
                         }
                     }
 
-                    // Get the quantity from the list item
                     if (produitObject.has("quantite")) {
                         product.setQuantite(produitObject.getDouble("quantite"));
                     }
@@ -222,7 +213,6 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
         View view = getLayoutInflater().inflate(R.layout.dialog_copy_list, null);
         EditText editTextListName = view.findViewById(R.id.editTextListName);
 
-        // Suggérer un nom par défaut pour la copie
         String nomCopie = getString(R.string.list_copy, currentList.getNom());
         editTextListName.setText(nomCopie);
 
@@ -270,14 +260,11 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
     }
 
     private void showQuantityDialog(Product product) {
-        // Create dialog view
         View view = getLayoutInflater().inflate(R.layout.dialog_product_quantity, null);
         EditText editTextQuantity = view.findViewById(R.id.editTextQuantity);
 
-        // Pre-fill with current quantity
         editTextQuantity.setText(String.valueOf(product.getQuantite()));
 
-        // Show dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(product.getNom())
                 .setView(view)
@@ -307,7 +294,6 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
 
             if (response.isSuccess()) {
                 Toast.makeText(this, R.string.quantity_updated, Toast.LENGTH_SHORT).show();
-                // Refresh the list
                 chargerDetailsDeLaListe();
             } else {
                 Toast.makeText(this,
@@ -345,7 +331,6 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
 
             if (response.isSuccess() && Boolean.TRUE.equals(response.getData())) {
                 Toast.makeText(this, R.string.product_deleted, Toast.LENGTH_SHORT).show();
-                // Refresh the product list
                 chargerDetailsDeLaListe();
             } else {
                 Toast.makeText(this,
@@ -366,7 +351,6 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ADD_PRODUCT && resultCode == RESULT_OK) {
-            // Rafraîchir la liste
             chargerDetailsDeLaListe();
         }
     }

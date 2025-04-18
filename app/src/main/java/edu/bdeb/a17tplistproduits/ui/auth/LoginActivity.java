@@ -35,18 +35,15 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialize services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Initialize views
         editTextUsername = findViewById(R.id.editTextUsername);
         editTextPassword = findViewById(R.id.editTextPassword);
         buttonLogin = findViewById(R.id.buttonLogin);
         textViewRegister = findViewById(R.id.textViewRegister);
         progressBar = findViewById(R.id.progressBar);
 
-        // Setup listeners
         buttonLogin.setOnClickListener(v -> loginUser());
         textViewRegister.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
@@ -55,11 +52,9 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loginUser() {
-        // Get input values
         String name = editTextUsername.getText().toString().trim();
         String password = editTextPassword.getText().toString();
 
-        // Validate inputs
         if (name.isEmpty()) {
             editTextUsername.setError(getString(R.string.email_required));
             editTextUsername.requestFocus();
@@ -72,25 +67,19 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Show progress and disable button
         progressBar.setVisibility(View.VISIBLE);
         buttonLogin.setEnabled(false);
 
-        // Send login request using a background thread
         new Thread(() -> {
             try {
-                // Get the result from the Future
                 ApiClient.ApiResponse<String> response = apiClient.login(name, password).get();
 
-                // Update UI on the main thread
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     buttonLogin.setEnabled(true);
 
-                    // Check for successful login
                     if (response.isSuccess() && response.getData() != null) {
                         String token = response.getData();
-                        // Save token and navigate to lists activity
                         sessionManager.saveAuthToken(token);
                         Log.d("LoginActivity", "Token: " + token.substring(0, 15) + "...");
 
@@ -99,7 +88,6 @@ public class LoginActivity extends AppCompatActivity {
                         startActivity(intent);
                         finish();
                     } else {
-                        // Show error message
                         Toast.makeText(LoginActivity.this,
                                 getString(R.string.login_failed) + ": " + response.getErrorMessage(),
                                 Toast.LENGTH_LONG).show();
@@ -107,7 +95,6 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
             } catch (ExecutionException | InterruptedException e) {
-                // Handle exceptions from Future.get()
                 runOnUiThread(() -> {
                     progressBar.setVisibility(View.GONE);
                     buttonLogin.setEnabled(true);

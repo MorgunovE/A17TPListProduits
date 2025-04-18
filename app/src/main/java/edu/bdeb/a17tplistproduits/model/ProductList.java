@@ -18,7 +18,6 @@ public class ProductList {
         this.produits = new ArrayList<>();
     }
 
-    // Version sans id pour création
     public ProductList(String nom, String description) {
         this.nom = nom;
         this.description = description;
@@ -29,7 +28,6 @@ public class ProductList {
 
     }
 
-    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getNom() { return nom; }

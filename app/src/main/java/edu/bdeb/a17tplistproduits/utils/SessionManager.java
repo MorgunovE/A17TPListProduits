@@ -25,14 +25,6 @@ public class SessionManager {
         editor = pref.edit();
     }
 
-    /**
-     * Enregistre les détails de la session utilisateur après connexion réussie
-     *
-     * @param token Token d'authentification
-     * @param userId ID de l'utilisateur
-     * @param username Nom d'utilisateur
-     * @param email Email de l'utilisateur
-     */
     public void createLoginSession(String token, String userId, String username, String email) {
         editor.putString(KEY_AUTH_TOKEN, token);
         editor.putString(KEY_USER_ID, userId);
@@ -42,54 +34,30 @@ public class SessionManager {
         editor.commit();
     }
 
-    /**
-     * Vérifie si l'utilisateur est connecté
-     *
-     * @return true si l'utilisateur est connecté, false sinon
-     */
     public boolean isLoggedIn() {
         return pref.getBoolean(KEY_IS_LOGGED_IN, false);
     }
 
-    /**
-     * Récupère le token d'authentification
-     *
-     * @return Le token d'authentification
-     */
     public String getAuthToken() {
         return pref.getString(KEY_AUTH_TOKEN, null);
     }
 
-    /**
-     * Récupère l'ID de l'utilisateur
-     *
-     * @return L'ID de l'utilisateur
-     */
+
     public String getUserId() {
         return pref.getString(KEY_USER_ID, null);
     }
 
-    /**
-     * Récupère le nom d'utilisateur
-     *
-     * @return Le nom d'utilisateur
-     */
+
     public String getUsername() {
         return pref.getString(KEY_USERNAME, null);
     }
 
-    /**
-     * Récupère l'email de l'utilisateur
-     *
-     * @return L'email de l'utilisateur
-     */
+
     public String getUserEmail() {
         return pref.getString(KEY_EMAIL, null);
     }
 
-    /**
-     * Vérifie l'état de connexion et redirige vers LoginActivity si non connecté
-     */
+
     public void checkLogin() {
         if (!isLoggedIn()) {
             Intent intent = new Intent(context, LoginActivity.class);
@@ -98,9 +66,7 @@ public class SessionManager {
         }
     }
 
-    /**
-     * Déconnexion de l'utilisateur
-     */
+
     public void logout() {
         editor.clear();
         editor.commit();
@@ -110,20 +76,13 @@ public class SessionManager {
         context.startActivity(intent);
     }
 
-    /**
-     * Save authentication token to shared preferences
-     * @param token The JWT token to save
-     */
+
     public void saveAuthToken(String token) {
         SharedPreferences.Editor editor = pref.edit();
         editor.putString(KEY_AUTH_TOKEN, token);
         editor.apply();
     }
 
-    /**
-     * Save user ID to shared preferences
-     * @param userId The user ID to save
-     */
     public void saveUserId(String userId) {
         SharedPreferences.Editor editor = pref.edit();
         editor.putString(KEY_USER_ID, userId);

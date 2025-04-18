@@ -24,28 +24,21 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        // Initialize views
         progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.VISIBLE);
 
-        // Initialize session manager
         sessionManager = new SessionManager(this);
 
-        // Delay for splash screen display, then check login state
         new Handler().postDelayed(this::checkLoginState, SPLASH_TIMEOUT);
     }
 
     private void checkLoginState() {
-        // Check if user is already logged in
         if (sessionManager.isLoggedIn()) {
-            // User is logged in, navigate to lists activity
             startActivity(new Intent(SplashActivity.this, ListsActivity.class));
         } else {
-            // User is not logged in, navigate to login activity
             startActivity(new Intent(SplashActivity.this, LoginActivity.class));
         }
 
-        // Close this activity
         finish();
     }
 }

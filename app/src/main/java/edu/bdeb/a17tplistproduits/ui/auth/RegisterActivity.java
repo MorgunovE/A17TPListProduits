@@ -36,11 +36,9 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        // Initialize services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Initialize views
         editTextUsername = findViewById(R.id.editTextName);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
@@ -49,7 +47,6 @@ public class RegisterActivity extends AppCompatActivity {
         textViewLogin = findViewById(R.id.textViewLogin);
         progressBar = findViewById(R.id.progressBar);
 
-        // Set click listeners
         buttonRegister.setOnClickListener(v -> registerUser());
         textViewLogin.setOnClickListener(v -> {
             finish();
@@ -57,13 +54,11 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void registerUser() {
-        // Get input values
         String username = editTextUsername.getText().toString().trim();
         String email = editTextEmail.getText().toString().trim();
         String password = editTextPassword.getText().toString();
         String confirmPassword = editTextConfirmPassword.getText().toString();
 
-        // Validate input
         if (username.isEmpty()) {
             editTextUsername.setError(getString(R.string.username_required));
             editTextUsername.requestFocus();
@@ -94,20 +89,16 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Show progress and disable button
         progressBar.setVisibility(View.VISIBLE);
         buttonRegister.setEnabled(false);
 
-        // Register user
         try {
             ApiClient.ApiResponse<Boolean> response = apiClient.register(username, email, password).get();
 
             if (response.isSuccess()) {
-                // Registration successful, now login
                 Toast.makeText(this, R.string.registration_success, Toast.LENGTH_SHORT).show();
                 loginAfterRegistration(username, password);
             } else {
-                // Registration failed
                 Toast.makeText(this,
                     getString(R.string.registration_failed) + ": " + response.getErrorMessage(),
                     Toast.LENGTH_LONG).show();
@@ -128,22 +119,18 @@ public class RegisterActivity extends AppCompatActivity {
             ApiClient.ApiResponse<String> response = apiClient.login(username, password).get();
 
             if (response.isSuccess() && response.getData() != null) {
-                // Login successful
                 String token = response.getData();
                 sessionManager.saveToken(token);
                 sessionManager.saveUsername(username);
 
-                // Navigate to lists activity
                 Intent intent = new Intent(this, ListsActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
             } else {
-                // Login failed
                 Toast.makeText(this,
                     getString(R.string.auto_login_failed) + ": " + response.getErrorMessage(),
                     Toast.LENGTH_LONG).show();
 
-                // Go back to login screen
                 finish();
             }
         } catch (ExecutionException | InterruptedException e) {

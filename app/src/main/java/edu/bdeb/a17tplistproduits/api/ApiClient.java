@@ -59,7 +59,6 @@ public class ApiClient {
         }
     }
 
-    // Authentication methods
     public Future<ApiResponse<String>> login(String username, String password) {
         JSONObject jsonBody = new JSONObject();
         try {
@@ -242,7 +241,6 @@ public class ApiClient {
         });
     }
 
-    // List methods
     public Future<ApiResponse<List<ProductList>>> getLists() {
         return executorService.submit(new Callable<ApiResponse<List<ProductList>>>() {
             @Override
@@ -298,12 +296,6 @@ public class ApiClient {
         });
     }
 
-    /**
-     * Delete a product by its ID
-     *
-     * @param productId ID of the product to delete
-     * @return ApiResponse with a Boolean indicating success
-     */
     public Future<ApiResponse<Boolean>> deleteProduct(String productId) {
         return executorService.submit(new Callable<ApiResponse<Boolean>>() {
             @Override
@@ -426,7 +418,6 @@ public class ApiClient {
 
 
 
-    // Helper methods
     private HttpURLConnection createConnection(String endpoint, String method, boolean requireAuth) throws IOException {
         URL url = new URL(BASE_URL + endpoint);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();

@@ -17,7 +17,6 @@ public class Product {
         this.description = description;
     }
 
-    // Version sans id pour création de produit
     public Product(String nom, double quantite, String unite, double prix, String description) {
         this.nom = nom;
         this.quantite = quantite;
@@ -30,7 +29,6 @@ public class Product {
 
     }
 
-    // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getNom() { return nom; }

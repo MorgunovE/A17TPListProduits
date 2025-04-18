@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity implements ProductListAdapte
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Vérifier si l'utilisateur est connecté
         if (!sessionManager.isLoggedIn()) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
@@ -55,25 +54,21 @@ public class MainActivity extends AppCompatActivity implements ProductListAdapte
 
         setTitle(R.string.product_lists);
 
-        // Initialiser les vues
         recyclerView = findViewById(R.id.recyclerViewLists);
         progressBar = findViewById(R.id.progressBar);
         textViewNoLists = findViewById(R.id.textViewNoLists);
         FloatingActionButton fabAddList = findViewById(R.id.fabAddList);
 
-        // Configurer RecyclerView
         productLists = new ArrayList<>();
         adapter = new ProductListAdapter(productLists, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
-        // Configurer le bouton d'ajout
         fabAddList.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AddListActivity.class);
             startActivity(intent);
         });
 
-        // Charger les listes
         loadLists();
     }
 

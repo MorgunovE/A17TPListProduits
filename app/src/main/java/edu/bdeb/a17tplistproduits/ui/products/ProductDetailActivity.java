@@ -49,11 +49,9 @@ public class ProductDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_detail);
 
-        // Initialize services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Initialize toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -61,7 +59,6 @@ public class ProductDetailActivity extends AppCompatActivity {
             getSupportActionBar().setTitle(R.string.product_details);
         }
 
-        // Initialize views
         textViewProductName = findViewById(R.id.textViewProductName);
         textViewProductQuantity = findViewById(R.id.textViewProductQuantity);
         textViewProductUnit = findViewById(R.id.textViewProductUnit);
@@ -70,7 +67,6 @@ public class ProductDetailActivity extends AppCompatActivity {
         buttonAddToList = findViewById(R.id.buttonAddToList);
         progressBar = findViewById(R.id.progressBar);
 
-        // Get product ID
         if (getIntent().hasExtra("product_id")) {
             productId = getIntent().getStringExtra("product_id");
             loadProductDetails();
@@ -79,7 +75,6 @@ public class ProductDetailActivity extends AppCompatActivity {
             finish();
         }
 
-        // Set button click listener
         buttonAddToList.setOnClickListener(v -> showListSelectionDialog());
     }
 
@@ -142,11 +137,9 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void showListsDialog(List<ProductList> lists) {
-        // Create dialog view
         View view = getLayoutInflater().inflate(R.layout.dialog_select_list, null);
         Spinner spinnerLists = view.findViewById(R.id.spinnerLists);
 
-        // Spinner adapter
         List<String> listNames = new ArrayList<>();
         for (ProductList list : lists) {
             listNames.add(list.getNom());
@@ -157,7 +150,6 @@ public class ProductDetailActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLists.setAdapter(adapter);
 
-        // Show dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(R.string.select_list)
                 .setView(view)
@@ -174,14 +166,11 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void showQuantityDialog(String listId) {
-        // Create dialog view
         View view = getLayoutInflater().inflate(R.layout.dialog_product_quantity, null);
         EditText editTextQuantity = view.findViewById(R.id.editTextQuantity);
 
-        // Pre-fill with default quantity
         editTextQuantity.setText(String.valueOf(currentProduct.getQuantite()));
 
-        // Show dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.quantity_for, currentProduct.getNom()))
                 .setView(view)

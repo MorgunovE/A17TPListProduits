@@ -44,7 +44,7 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
 
     private ProductAdapter adapter;
     private List<Product> productList;
-    private String listId; // ID de la liste où ajouter les produits (si applicable)
+    private String listId;
 
     private List<Product> products;
 
@@ -53,11 +53,9 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_products);
 
-        // Initialiser les services
         sessionManager = new SessionManager(this);
         apiClient = new ApiClient(sessionManager);
 
-        // Configurer la toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -65,25 +63,21 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
             getSupportActionBar().setTitle(R.string.search_products);
         }
 
-        // Initialiser les vues
         searchView = findViewById(R.id.searchView);
         recyclerViewProducts = findViewById(R.id.recyclerViewProducts);
         textViewNoProducts = findViewById(R.id.textViewNoProducts);
         progressBar = findViewById(R.id.progressBar);
         fabAddProduct = findViewById(R.id.fabAddProduct);
 
-        // Configurer le RecyclerView
         recyclerViewProducts.setLayoutManager(new LinearLayoutManager(this));
         productList = new ArrayList<>();
         adapter = new ProductAdapter(productList, this);
         recyclerViewProducts.setAdapter(adapter);
 
-        // Récupérer l'ID de la liste si passé
         if (getIntent().hasExtra("list_id")) {
             listId = getIntent().getStringExtra("list_id");
         }
 
-        // Configurer la recherche
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -102,10 +96,8 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
             }
         });
 
-        // Configurer le FAB
         fabAddProduct.setOnClickListener(v -> ouvrirEcranAjoutProduit());
 
-        // Chargement initial des produits
         chargerProduits("");
     }
 
@@ -183,11 +175,9 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
 
     @Override
     public void onProductClick(Product product) {
-        // If listId is provided, show quantity dialog and add to list
         if (listId != null) {
             showQuantityDialog(product);
         } else {
-            // Otherwise open product details
             Intent intent = new Intent(this, ProductDetailActivity.class);
             intent.putExtra("product_id", product.getId());
             startActivity(intent);
@@ -195,14 +185,11 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
     }
 
     private void showQuantityDialog(Product product) {
-        // Create dialog view
         View view = getLayoutInflater().inflate(R.layout.dialog_product_quantity, null);
         EditText editTextQuantity = view.findViewById(R.id.editTextQuantity);
 
-        // Pre-fill with default quantity
         editTextQuantity.setText(String.valueOf(product.getQuantite()));
 
-        // Show dialog
         new AlertDialog.Builder(this)
                 .setTitle(getString(R.string.quantity_for, product.getNom()))
                 .setView(view)
@@ -265,7 +252,6 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
 
             if (response.isSuccess() && Boolean.TRUE.equals(response.getData())) {
                 Toast.makeText(this, R.string.product_deleted, Toast.LENGTH_SHORT).show();
-                // Refresh the product list
                 loadProducts();
             } else {
                 Toast.makeText(this,
@@ -323,7 +309,6 @@ public class ProductsActivity extends AppCompatActivity implements ProductAdapte
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ADD_PRODUCT && resultCode == RESULT_OK) {
-            // Rafraîchir la liste des produits
             chargerProduits("");
         }
     }
