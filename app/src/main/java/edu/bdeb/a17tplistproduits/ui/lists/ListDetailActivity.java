@@ -33,6 +33,7 @@ import edu.bdeb.a17tplistproduits.adapters.ProductAdapter;
 import edu.bdeb.a17tplistproduits.api.ApiClient;
 import edu.bdeb.a17tplistproduits.model.Product;
 import edu.bdeb.a17tplistproduits.model.ProductList;
+import edu.bdeb.a17tplistproduits.ui.products.ProductDetailActivity;
 import edu.bdeb.a17tplistproduits.ui.products.ProductsActivity;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
@@ -265,8 +266,61 @@ public class ListDetailActivity extends AppCompatActivity implements ProductAdap
 
     @Override
     public void onProductClick(Product product) {
-        // Afficher les détails du produit (optionnel)
-        // Pourrait être utilisé pour modifier la quantité ou supprimer le produit
+        showQuantityDialog(product);
+    }
+
+    private void showQuantityDialog(Product product) {
+        // Create dialog view
+        View view = getLayoutInflater().inflate(R.layout.dialog_product_quantity, null);
+        EditText editTextQuantity = view.findViewById(R.id.editTextQuantity);
+
+        // Pre-fill with current quantity
+        editTextQuantity.setText(String.valueOf(product.getQuantite()));
+
+        // Show dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(product.getNom())
+                .setView(view)
+                .setPositiveButton(R.string.save, (dialog, which) -> {
+                    String quantityStr = editTextQuantity.getText().toString();
+                    if (!quantityStr.isEmpty()) {
+                        try {
+                            double quantity = Double.parseDouble(quantityStr);
+                            updateProductQuantity(product, quantity);
+                        } catch (NumberFormatException e) {
+                            Toast.makeText(this, R.string.invalid_quantity, Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(this, R.string.invalid_quantity, Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private void updateProductQuantity(Product product, double quantity) {
+        progressBar.setVisibility(View.VISIBLE);
+
+        try {
+            ApiClient.ApiResponse<ProductList> response = apiClient.addProductToList(listId, product.getId(), quantity).get();
+
+            if (response.isSuccess()) {
+                Toast.makeText(this, R.string.quantity_updated, Toast.LENGTH_SHORT).show();
+                // Refresh the list
+                chargerDetailsDeLaListe();
+            } else {
+                Toast.makeText(this,
+                        getString(R.string.update_failed) + ": " + response.getErrorMessage(),
+                        Toast.LENGTH_LONG).show();
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            Toast.makeText(this,
+                    getString(R.string.network_error) + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        } finally {
+            progressBar.setVisibility(View.GONE);
+        }
     }
 
     public void copyList(View view) {

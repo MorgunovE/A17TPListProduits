@@ -115,4 +115,8 @@
 
     <string name="error_loading_products">error loading products</string>
 
+    <string name="save">Save</string>
+    <string name="quantity_updated">Quantity updated</string>
+    <string name="update_failed">Update failed</string>
+
 </resources>
