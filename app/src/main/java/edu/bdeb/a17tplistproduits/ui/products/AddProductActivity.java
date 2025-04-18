@@ -154,7 +154,7 @@ public class AddProductActivity extends AppCompatActivity {
 
             if (isEditMode) {
                 product.setId(productId);
-                response = apiClient.updateProduct(product).get();
+                response = apiClient.updateProduct(product.getId(), product).get();
             } else {
                 response = apiClient.createProduct(product).get();
             }
