@@ -23,10 +23,14 @@ import java.util.concurrent.Future;
 import edu.bdeb.a17tplistproduits.model.Product;
 import edu.bdeb.a17tplistproduits.model.ProductList;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
+import edu.bdeb.a17tplistproduits.BuildConfig;
+
 
 public class ApiClient {
     private static final String TAG = "ApiClient";
-    private static final String BASE_URL = "http://10.0.2.2:5000"; // Android emulator localhost
+
+    // add api url from build.gradle.kts
+    private static final String BASE_URL = BuildConfig.API_BASE_URL;
     private final SessionManager sessionManager;
     private final ExecutorService executorService;
 

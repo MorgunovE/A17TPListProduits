@@ -14,6 +14,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // API_BASE_URL is the base URL of the API
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5000\"")
     }
 
     buildTypes {
@@ -28,6 +30,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 }
 
