@@ -298,6 +298,33 @@ public class ApiClient {
         });
     }
 
+    /**
+     * Delete a product by its ID
+     *
+     * @param productId ID of the product to delete
+     * @return ApiResponse with a Boolean indicating success
+     */
+    public Future<ApiResponse<Boolean>> deleteProduct(String productId) {
+        return executorService.submit(new Callable<ApiResponse<Boolean>>() {
+            @Override
+            public ApiResponse<Boolean> call() {
+                try {
+                    HttpURLConnection connection = createConnection("/produits/" + productId, "DELETE", true);
+
+                    if (connection.getResponseCode() == 200) {
+                        return new ApiResponse<>(true, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(false, errorMessage, false);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Delete product error", e);
+                    return new ApiResponse<>(false, e.getMessage(), false);
+                }
+            }
+        });
+    }
+
     public Future<ApiResponse<ProductList>> createList(ProductList list) {
         JSONObject jsonBody = new JSONObject();
         try {
@@ -331,6 +358,8 @@ public class ApiClient {
             }
         });
     }
+
+
 
     public Future<ApiResponse<ProductList>> addProductToList(String listId, String productId, double quantity) {
         JSONObject jsonBody = new JSONObject();
@@ -394,6 +423,8 @@ public class ApiClient {
             }
         });
     }
+
+
 
     // Helper methods
     private HttpURLConnection createConnection(String endpoint, String method, boolean requireAuth) throws IOException {
