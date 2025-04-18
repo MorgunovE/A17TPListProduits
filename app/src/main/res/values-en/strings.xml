@@ -22,7 +22,6 @@
     <string name="product_added_to_list_success">Product added to list successfully</string>
     <string name="product_add_to_list_error">Error adding product to list</string>
 
-    <!-- Auth strings -->
     <string name="login_title">Login</string>
     <string name="username_hint">Username</string>
     <string name="password_hint">Password</string>
@@ -34,7 +33,6 @@
     <string name="register_button">Register</string>
     <string name="login_prompt">Already have an account? Login here</string>
 
-    <!-- Main app strings -->
     <string name="product_lists">My Lists</string>
     <string name="add_list">Add List</string>
     <string name="no_lists">No lists found</string>
@@ -48,7 +46,6 @@
     <string name="list_created_success">List created successfully</string>
     <string name="list_creation_error">Error creating list</string>
     <string name="network_error">Network error</string>
-    <!-- Additional strings needed -->
     <string name="list_not_found">List not found</string>
     <string name="list_copied_success">List copied successfully</string>
     <string name="copy">Copy</string>
@@ -58,7 +55,6 @@
     <string name="product_count">Products:</string>
     <string name="no_products_found">No products found</string>
 
-    <!-- Product strings -->
     <string name="product_name">Product name</string>
     <string name="product_quantity">Quantity</string>
     <string name="product_unit">Unit</string>
@@ -130,7 +126,7 @@
     <string name="select_list">Select a list</string>
     <string name="cancel">Cancel</string>
     <string name="add">Add</string>
-    <string name="quantity_for">Quantity for %1$s</string>
+    <string name="quantity_for">Quantity</string>
     <string name="invalid_quantity">Invalid quantity</string>
     <string name="product_added_to_list">Product added to the list</string>
 
