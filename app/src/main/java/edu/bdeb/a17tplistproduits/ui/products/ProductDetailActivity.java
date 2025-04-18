@@ -45,7 +45,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private String productId;
     private Product currentProduct;
-    private static final int REQUEST_EDIT_PRODUCT = 1;
+    public static final int REQUEST_EDIT_PRODUCT = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
