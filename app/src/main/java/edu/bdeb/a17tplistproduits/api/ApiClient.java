@@ -1,6 +1,5 @@
 package edu.bdeb.a17tplistproduits.api;
 
-import android.os.AsyncTask;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -9,7 +8,6 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -17,643 +15,495 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import edu.bdeb.a17tplistproduits.model.Product;
 import edu.bdeb.a17tplistproduits.model.ProductList;
-import edu.bdeb.a17tplistproduits.model.User;
 import edu.bdeb.a17tplistproduits.utils.SessionManager;
 
 public class ApiClient {
     private static final String TAG = "ApiClient";
-    private static final String BASE_URL = "http://10.0.2.2:5000"; // Emulator localhost
-
+    private static final String BASE_URL = "http://10.0.2.2:5000"; // Android emulator localhost
     private final SessionManager sessionManager;
     private final ExecutorService executorService;
 
     public ApiClient(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
-        this.executorService = Executors.newFixedThreadPool(4); // Create a thread pool with 4 threads
-
+        this.executorService = Executors.newCachedThreadPool();
     }
 
     public static class ApiResponse<T> {
-        private T data;
-        private boolean success;
-        private String errorMessage;
+        private final T data;
+        private final String errorMessage;
+        private final boolean success;
 
-        public ApiResponse(T data) {
+        public ApiResponse(T data, String errorMessage, boolean success) {
             this.data = data;
-            this.success = true;
-            this.errorMessage = null;
-        }
-
-        public ApiResponse(boolean success, T data, String errorMessage) {
+            this.errorMessage = errorMessage;
             this.success = success;
-            this.data = data;
-            this.errorMessage = errorMessage;
-        }
-
-        public ApiResponse(String errorMessage) {
-            this.data = null;
-            this.success = false;
-            this.errorMessage = errorMessage;
-        }
-
-        public ApiResponse() {
-
         }
 
         public T getData() {
             return data;
         }
 
-        public boolean isSuccess() {
-            return success;
-        }
-
         public String getErrorMessage() {
             return errorMessage;
         }
 
-        public void setSuccess(boolean b) {
-            this.success = b;
-        }
-
-        public void setData(T token) {
-            this.data = token;
-        }
-
-        public void setErrorMessage(T noTokenInResponse) {
-            this.errorMessage = (String) noTokenInResponse;
+        public boolean isSuccess() {
+            return success;
         }
     }
 
     // Authentication methods
     public Future<ApiResponse<String>> login(String username, String password) {
-        FutureTask<ApiResponse<String>> future = new FutureTask<>(() -> {
-            ApiResponse<String> result = new ApiResponse<>();
-            try {
-                // Create request body with email and password
-                JSONObject jsonBody = new JSONObject();
-                jsonBody.put("username", username);
-                jsonBody.put("password", password);
-
-                URL url = new URL(BASE_URL + "/connexion");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                // Setup connection
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setDoOutput(true);
-
-                // Write request body
-                try (OutputStream os = connection.getOutputStream()) {
-                    byte[] input = jsonBody.toString().getBytes(StandardCharsets.UTF_8);
-                    os.write(input, 0, input.length);
-                }
-
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    // Read successful response
-                    String response = readInputStream(connection.getInputStream());
-                    Log.d(TAG, "Login raw response: " + response);
-
-                    // Parse the JSON response
-                    JSONObject jsonResponse = new JSONObject(response);
-                    if (jsonResponse.has("access_token")) {
-                        String token = jsonResponse.getString("access_token");
-                        Log.d(TAG, "Login successful with token: " + token.substring(0, 15) + "...");
-                        result.setSuccess(true);
-                        result.setData(token);
-                    } else if (response.startsWith("eyJ")) {
-                        // Direct token in response
-                        Log.d(TAG, "Login successful with direct token: " + response.substring(0, 15) + "...");
-                        result.setSuccess(true);
-                        result.setData(response);
-                    } else {
-                        result.setSuccess(false);
-                        result.setErrorMessage("No token in response");
-                    }
-                } else {
-                    // Handle error response
-                    String errorResponse = readInputStream(connection.getErrorStream());
-                    Log.e(TAG, "Login failed with code: " + responseCode + ", response: " + errorResponse);
-
-                    // Check if error response is actually a JWT token
-                    if (errorResponse.startsWith("eyJ")) {
-                        Log.d(TAG, "Found token in error response: " + errorResponse.substring(0, 15) + "...");
-                        result.setSuccess(true);
-                        result.setData(errorResponse);
-                    } else {
-                        result.setSuccess(false);
-                        result.setErrorMessage(errorResponse);
-                    }
-                }
-                connection.disconnect();
-            } catch (Exception e) {
-                Log.e(TAG, "Exception during login: " + e.getMessage());
-                result.setSuccess(false);
-                result.setErrorMessage(e.getMessage());
-            }
-            Log.d(TAG, "Login completed, success: " + result.isSuccess() +
-                  ", has data: " + (result.getData() != null) +
-                  (result.isSuccess() ? "" : ", error: " + result.getErrorMessage()));
-            return result;
-        });
-
-        executorService.submit(future);
-        return future;
-    }
-
-    private String readInputStream(InputStream inputStream) {
-        StringBuilder response = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "Error reading input stream: " + e.getMessage());
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("username", username);
+            jsonBody.put("password", password);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        return response.toString();
+
+        return executorService.submit(new Callable<ApiResponse<String>>() {
+            @Override
+            public ApiResponse<String> call() {
+                try {
+                    HttpURLConnection connection = createConnection("/connexion", "POST", false);
+                    writeBody(connection, jsonBody.toString());
+
+                    if (connection.getResponseCode() == 200) {
+                        JSONObject response = readJsonResponse(connection);
+                        String token = response.getString("access_token");
+                        return new ApiResponse<>(token, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Login error", e);
+                    return new ApiResponse<>(null, e.getMessage(), false);
+                }
+            }
+        });
     }
 
+    public Future<ApiResponse<Boolean>> register(String username, String email, String password) {
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("username", username);
+            jsonBody.put("email", email);
+            jsonBody.put("password", password);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-    public Future<ApiResponse<String>> register(String username, String password, String email) {
-        FutureTask<ApiResponse<String>> future = new FutureTask<>(() -> {
-            ApiResponse<String> result = new ApiResponse<>();
-            try {
-                // Create request body with registration details
-                JSONObject jsonBody = new JSONObject();
-                jsonBody.put("username", username);
-                jsonBody.put("password", password);
-                jsonBody.put("email", email);
+        return executorService.submit(new Callable<ApiResponse<Boolean>>() {
+            @Override
+            public ApiResponse<Boolean> call() {
+                try {
+                    HttpURLConnection connection = createConnection("/inscription", "POST", false);
+                    writeBody(connection, jsonBody.toString());
 
-                URL url = new URL(BASE_URL + "/inscription");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                // Setup connection
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setDoOutput(true);
-
-                // Write request body
-                try (OutputStream os = connection.getOutputStream()) {
-                    byte[] input = jsonBody.toString().getBytes(StandardCharsets.UTF_8);
-                    os.write(input, 0, input.length);
-                }
-
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
-                    // Read successful response
-                    String response = readInputStream(connection.getInputStream());
-                    Log.d(TAG, "Registration raw response: " + response);
-
-                    // Check if response contains token or success message
-                    if (response.contains("token") || response.startsWith("eyJ")) {
-                        // If server returns token immediately after registration
-                        result.setSuccess(true);
-                        result.setData(response);
-                        Log.d(TAG, "Registration successful");
+                    if (connection.getResponseCode() == 201) {
+                        return new ApiResponse<>(true, null, true);
                     } else {
-                        // Just a success message
-                        result.setSuccess(true);
-                        result.setData("Registration successful");
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(false, errorMessage, false);
                     }
-                } else {
-                    // Handle error response
-                    String errorResponse = readInputStream(connection.getErrorStream());
-                    Log.e(TAG, "Registration failed with code: " + responseCode + ", response: " + errorResponse);
-                    result.setSuccess(false);
-                    result.setErrorMessage(errorResponse);
+                } catch (Exception e) {
+                    Log.e(TAG, "Registration error", e);
+                    return new ApiResponse<>(false, e.getMessage(), false);
                 }
-                connection.disconnect();
-            } catch (Exception e) {
-                Log.e(TAG, "Exception during registration: " + e.getMessage());
-                result.setSuccess(false);
-                result.setErrorMessage(e.getMessage());
             }
-            Log.d(TAG, "Registration completed, success: " + result.isSuccess() +
-                  ", has data: " + (result.getData() != null) +
-                  (result.isSuccess() ? "" : ", error: " + result.getErrorMessage()));
-            return result;
         });
-
-        executorService.submit(future);
-        return future;
     }
 
     // Product methods
-    public CompletableFuture<ApiResponse<List<Product>>> getProducts() {
-        return searchProducts("");
-    }
-
-    public CompletableFuture<ApiResponse<List<Product>>> searchProducts(String query) {
-        CompletableFuture<ApiResponse<List<Product>>> future = new CompletableFuture<>();
-
-        new AsyncTask<Void, Void, ApiResponse<List<Product>>>() {
+    public Future<ApiResponse<List<Product>>> getProducts() {
+        return executorService.submit(new Callable<ApiResponse<List<Product>>>() {
             @Override
-            protected ApiResponse<List<Product>> doInBackground(Void... voids) {
+            public ApiResponse<List<Product>> call() {
                 try {
-                    String endpoint = BASE_URL + "/produits";
-                    if (query != null && !query.isEmpty()) {
-                        endpoint += "?nom=" + query;
-                    }
+                    HttpURLConnection connection = createConnection("/produits", "GET", true);
 
-                    String token = sessionManager.getAuthToken();
-                    String jsonResponse = performRequest(endpoint, "GET", null, token);
+                    if (connection.getResponseCode() == 200) {
+                        JSONArray jsonArray = new JSONArray(readResponse(connection));
+                        List<Product> products = new ArrayList<>();
 
-                    JSONArray jsonArray = new JSONArray(jsonResponse);
-                    List<Product> products = new ArrayList<>();
-
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject jsonProduct = jsonArray.getJSONObject(i);
-                        Product product = new Product();
-                        product.setId(jsonProduct.getString("_id"));
-                        product.setNom(jsonProduct.getString("nom"));
-                        product.setQuantite(jsonProduct.getDouble("quantite"));
-                        product.setUnite(jsonProduct.getString("unite"));
-                        product.setPrix(jsonProduct.getDouble("prix"));
-
-                        if (jsonProduct.has("description") && !jsonProduct.isNull("description")) {
-                            product.setDescription(jsonProduct.getString("description"));
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+                            Product product = jsonToProduct(jsonObject);
+                            products.add(product);
                         }
-
-                        products.add(product);
+                        return new ApiResponse<>(products, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
                     }
-
-                    return new ApiResponse<>(products);
                 } catch (Exception e) {
-                    Log.e(TAG, "Search products error", e);
-                    return new ApiResponse<>(e.getMessage());
+                    Log.e(TAG, "Get products error", e);
+                    return new ApiResponse<>(null, e.getMessage(), false);
                 }
             }
-
-            @Override
-            protected void onPostExecute(ApiResponse<List<Product>> result) {
-                future.complete(result);
-            }
-        }.execute();
-
-        return future;
+        });
     }
 
-    public CompletableFuture<ApiResponse<Product>> getProduct(String productId) {
-        CompletableFuture<ApiResponse<Product>> future = new CompletableFuture<>();
-
-        new AsyncTask<Void, Void, ApiResponse<Product>>() {
+    public Future<ApiResponse<Product>> getProduct(String productId) {
+        return executorService.submit(new Callable<ApiResponse<Product>>() {
             @Override
-            protected ApiResponse<Product> doInBackground(Void... voids) {
+            public ApiResponse<Product> call() {
                 try {
-                    String token = sessionManager.getAuthToken();
-                    String jsonResponse = performRequest(BASE_URL + "/produits/" + productId, "GET", null, token);
+                    HttpURLConnection connection = createConnection("/produits/" + productId, "GET", true);
 
-                    JSONObject jsonProduct = new JSONObject(jsonResponse);
-                    Product product = new Product();
-                    product.setId(jsonProduct.getString("_id"));
-                    product.setNom(jsonProduct.getString("nom"));
-                    product.setQuantite(jsonProduct.getDouble("quantite"));
-                    product.setUnite(jsonProduct.getString("unite"));
-                    product.setPrix(jsonProduct.getDouble("prix"));
-
-                    if (jsonProduct.has("description") && !jsonProduct.isNull("description")) {
-                        product.setDescription(jsonProduct.getString("description"));
+                    if (connection.getResponseCode() == 200) {
+                        JSONObject jsonObject = new JSONObject(readResponse(connection));
+                        Product product = jsonToProduct(jsonObject);
+                        return new ApiResponse<>(product, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
                     }
-
-                    return new ApiResponse<>(product);
                 } catch (Exception e) {
                     Log.e(TAG, "Get product error", e);
-                    return new ApiResponse<>(e.getMessage());
+                    return new ApiResponse<>(null, e.getMessage(), false);
                 }
             }
-
-            @Override
-            protected void onPostExecute(ApiResponse<Product> result) {
-                future.complete(result);
-            }
-        }.execute();
-
-        return future;
+        });
     }
 
-    public CompletableFuture<ApiResponse<String>> createProduct(Product product) {
-        CompletableFuture<ApiResponse<String>> future = new CompletableFuture<>();
-
-        new AsyncTask<Void, Void, ApiResponse<String>>() {
+    public Future<ApiResponse<List<Product>>> searchProducts(String query) {
+        return executorService.submit(new Callable<ApiResponse<List<Product>>>() {
             @Override
-            protected ApiResponse<String> doInBackground(Void... voids) {
+            public ApiResponse<List<Product>> call() {
                 try {
-                    JSONObject jsonBody = new JSONObject();
-                    jsonBody.put("nom", product.getNom());
-                    jsonBody.put("quantite", product.getQuantite());
-                    jsonBody.put("unite", product.getUnite());
-                    jsonBody.put("prix", product.getPrix());
+                    HttpURLConnection connection = createConnection("/produits?nom=" + query, "GET", true);
 
-                    if (product.getDescription() != null && !product.getDescription().isEmpty()) {
-                        jsonBody.put("description", product.getDescription());
-                    }
+                    if (connection.getResponseCode() == 200) {
+                        JSONArray jsonArray = new JSONArray(readResponse(connection));
+                        List<Product> products = new ArrayList<>();
 
-                    String token = sessionManager.getAuthToken();
-                    String jsonResponse = performRequest(BASE_URL + "/produits", "POST", jsonBody.toString(), token);
-
-                    JSONObject response = new JSONObject(jsonResponse);
-                    if (response.has("_id")) {
-                        return new ApiResponse<>(response.getString("_id"));
-                    } else if (response.has("erreur")) {
-                        return new ApiResponse<>(response.getString("erreur"));
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+                            Product product = jsonToProduct(jsonObject);
+                            products.add(product);
+                        }
+                        return new ApiResponse<>(products, null, true);
                     } else {
-                        return new ApiResponse<>("Unknown error occurred");
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Search products error", e);
+                    return new ApiResponse<>(null, e.getMessage(), false);
+                }
+            }
+        });
+    }
+
+    public Future<ApiResponse<String>> createProduct(Product product) {
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("nom", product.getNom());
+            jsonBody.put("quantite", product.getQuantite());
+            jsonBody.put("unite", product.getUnite());
+            jsonBody.put("prix", product.getPrix());
+            if (product.getDescription() != null) {
+                jsonBody.put("description", product.getDescription());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return executorService.submit(new Callable<ApiResponse<String>>() {
+            @Override
+            public ApiResponse<String> call() {
+                try {
+                    HttpURLConnection connection = createConnection("/produits", "POST", true);
+                    writeBody(connection, jsonBody.toString());
+
+                    if (connection.getResponseCode() == 201) {
+                        JSONObject response = new JSONObject(readResponse(connection));
+                        String productId = response.getString("_id");
+                        return new ApiResponse<>(productId, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Create product error", e);
-                    return new ApiResponse<>(e.getMessage());
+                    return new ApiResponse<>(null, e.getMessage(), false);
                 }
             }
-
-            @Override
-            protected void onPostExecute(ApiResponse<String> result) {
-                future.complete(result);
-            }
-        }.execute();
-
-        return future;
+        });
     }
 
     // List methods
-    public CompletableFuture<ApiResponse<List<ProductList>>> getLists() {
-        CompletableFuture<ApiResponse<List<ProductList>>> future = new CompletableFuture<>();
-
-        new AsyncTask<Void, Void, ApiResponse<List<ProductList>>>() {
+    public Future<ApiResponse<List<ProductList>>> getLists() {
+        return executorService.submit(new Callable<ApiResponse<List<ProductList>>>() {
             @Override
-            protected ApiResponse<List<ProductList>> doInBackground(Void... voids) {
+            public ApiResponse<List<ProductList>> call() {
                 try {
-                    String token = sessionManager.getAuthToken();
-                    String jsonResponse = performRequest(BASE_URL + "/listes", "GET", null, token);
+                    HttpURLConnection connection = createConnection("/listes", "GET", true);
 
-                    JSONArray jsonArray = new JSONArray(jsonResponse);
-                    List<ProductList> lists = new ArrayList<>();
+                    if (connection.getResponseCode() == 200) {
+                        JSONArray jsonArray = new JSONArray(readResponse(connection));
+                        List<ProductList> lists = new ArrayList<>();
 
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject jsonList = jsonArray.getJSONObject(i);
-                        ProductList list = new ProductList();
-                        list.setId(jsonList.getString("_id"));
-                        list.setNom(jsonList.getString("nom"));
-
-                        if (jsonList.has("description") && !jsonList.isNull("description")) {
-                            list.setDescription(jsonList.getString("description"));
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+                            ProductList list = jsonToProductList(jsonObject);
+                            lists.add(list);
                         }
-
-                        lists.add(list);
+                        return new ApiResponse<>(lists, null, true);
+                    } else if (connection.getResponseCode() == 404) {
+                        // No lists found is not an error, return empty list
+                        return new ApiResponse<>(new ArrayList<>(), null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
                     }
-
-                    return new ApiResponse<>(lists);
                 } catch (Exception e) {
                     Log.e(TAG, "Get lists error", e);
-                    return new ApiResponse<>(e.getMessage());
+                    return new ApiResponse<>(null, e.getMessage(), false);
                 }
             }
-
-            @Override
-            protected void onPostExecute(ApiResponse<List<ProductList>> result) {
-                future.complete(result);
-            }
-        }.execute();
-
-        return future;
+        });
     }
 
-    public CompletableFuture<ApiResponse<ProductList>> createList(ProductList list) {
-        CompletableFuture<ApiResponse<ProductList>> future = new CompletableFuture<>();
-
-        new AsyncTask<Void, Void, ApiResponse<ProductList>>() {
+    public Future<ApiResponse<ProductList>> getList(String listId) {
+        return executorService.submit(new Callable<ApiResponse<ProductList>>() {
             @Override
-            protected ApiResponse<ProductList> doInBackground(Void... voids) {
+            public ApiResponse<ProductList> call() {
                 try {
-                    JSONObject jsonBody = new JSONObject();
-                    jsonBody.put("nom", list.getNom());
+                    HttpURLConnection connection = createConnection("/listes/" + listId, "GET", true);
 
-                    if (list.getDescription() != null && !list.getDescription().isEmpty()) {
-                        jsonBody.put("description", list.getDescription());
+                    if (connection.getResponseCode() == 200) {
+                        JSONObject jsonObject = new JSONObject(readResponse(connection));
+                        ProductList list = jsonToProductList(jsonObject);
+                        return new ApiResponse<>(list, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
                     }
-
-                    String token = sessionManager.getAuthToken();
-                    String jsonResponse = performRequest(BASE_URL + "/listes", "POST", jsonBody.toString(), token);
-
-                    JSONObject jsonList = new JSONObject(jsonResponse);
-                    ProductList createdList = new ProductList();
-                    createdList.setId(jsonList.getString("_id"));
-                    createdList.setNom(jsonList.getString("nom"));
-
-                    if (jsonList.has("description") && !jsonList.isNull("description")) {
-                        createdList.setDescription(jsonList.getString("description"));
-                    }
-
-                    return new ApiResponse<>(createdList);
-                } catch (Exception e) {
-                    Log.e(TAG, "Create list error", e);
-                    return new ApiResponse<>(e.getMessage());
-                }
-            }
-
-            @Override
-            protected void onPostExecute(ApiResponse<ProductList> result) {
-                future.complete(result);
-            }
-        }.execute();
-
-        return future;
-    }
-
-    public CompletableFuture<ApiResponse<ProductList>> getList(String listId) {
-        CompletableFuture<ApiResponse<ProductList>> future = new CompletableFuture<>();
-
-        new AsyncTask<Void, Void, ApiResponse<ProductList>>() {
-            @Override
-            protected ApiResponse<ProductList> doInBackground(Void... voids) {
-                try {
-                    String token = sessionManager.getAuthToken();
-                    String jsonResponse = performRequest(BASE_URL + "/listes/" + listId, "GET", null, token);
-
-                    JSONObject jsonList = new JSONObject(jsonResponse);
-                    ProductList list = new ProductList();
-                    list.setId(jsonList.getString("_id"));
-                    list.setNom(jsonList.getString("nom"));
-
-                    if (jsonList.has("description") && !jsonList.isNull("description")) {
-                        list.setDescription(jsonList.getString("description"));
-                    }
-
-                    if (jsonList.has("produits") && !jsonList.isNull("produits")) {
-                        JSONArray jsonProducts = jsonList.getJSONArray("produits");
-                        List<Product> products = new ArrayList<>();
-
-                        for (int i = 0; i < jsonProducts.length(); i++) {
-                            JSONObject jsonProduct = jsonProducts.getJSONObject(i);
-                            Product product = new Product();
-                            product.setId(jsonProduct.getString("produit_id"));
-                            product.setNom(jsonProduct.getString("nom"));
-                            product.setQuantite(jsonProduct.getDouble("quantite"));
-                            product.setUnite(jsonProduct.getString("unite"));
-                            product.setPrix(jsonProduct.getDouble("prix"));
-                            products.add(product);
-                        }
-
-                        list.setProduits(products);
-                    }
-
-                    return new ApiResponse<>(list);
                 } catch (Exception e) {
                     Log.e(TAG, "Get list error", e);
-                    return new ApiResponse<>(e.getMessage());
+                    return new ApiResponse<>(null, e.getMessage(), false);
                 }
             }
-
-            @Override
-            protected void onPostExecute(ApiResponse<ProductList> result) {
-                future.complete(result);
-            }
-        }.execute();
-
-        return future;
+        });
     }
 
-    public CompletableFuture<ApiResponse<ProductList>> addProductToList(String listId, String productId, double quantity) {
-        CompletableFuture<ApiResponse<ProductList>> future = new CompletableFuture<>();
+    public Future<ApiResponse<ProductList>> createList(ProductList list) {
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("nom", list.getNom());
+            if (list.getDescription() != null && !list.getDescription().isEmpty()) {
+                jsonBody.put("description", list.getDescription());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-        new AsyncTask<Void, Void, ApiResponse<ProductList>>() {
+        return executorService.submit(new Callable<ApiResponse<ProductList>>() {
             @Override
-            protected ApiResponse<ProductList> doInBackground(Void... voids) {
+            public ApiResponse<ProductList> call() {
                 try {
-                    JSONObject jsonBody = new JSONObject();
-                    jsonBody.put("produit_id", productId);
-                    jsonBody.put("quantite", quantity);
+                    HttpURLConnection connection = createConnection("/listes", "POST", true);
+                    writeBody(connection, jsonBody.toString());
 
-                    String token = sessionManager.getAuthToken();
-                    String jsonResponse = performRequest(BASE_URL + "/listes/" + listId + "/produits",
-                            "POST", jsonBody.toString(), token);
-
-                    JSONObject jsonList = new JSONObject(jsonResponse);
-                    ProductList updatedList = new ProductList();
-                    updatedList.setId(jsonList.getString("_id"));
-                    updatedList.setNom(jsonList.getString("nom"));
-
-                    if (jsonList.has("description") && !jsonList.isNull("description")) {
-                        updatedList.setDescription(jsonList.getString("description"));
+                    if (connection.getResponseCode() == 201) {
+                        JSONObject response = new JSONObject(readResponse(connection));
+                        ProductList createdList = jsonToProductList(response);
+                        return new ApiResponse<>(createdList, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
                     }
+                } catch (Exception e) {
+                    Log.e(TAG, "Create list error", e);
+                    return new ApiResponse<>(null, e.getMessage(), false);
+                }
+            }
+        });
+    }
 
-                    return new ApiResponse<>(updatedList);
+    public Future<ApiResponse<ProductList>> addProductToList(String listId, String productId, double quantity) {
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("produit_id", productId);
+            jsonBody.put("quantite", quantity);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return executorService.submit(new Callable<ApiResponse<ProductList>>() {
+            @Override
+            public ApiResponse<ProductList> call() {
+                try {
+                    HttpURLConnection connection = createConnection("/listes/" + listId + "/produits", "POST", true);
+                    writeBody(connection, jsonBody.toString());
+
+                    if (connection.getResponseCode() == 200) {
+                        JSONObject response = new JSONObject(readResponse(connection));
+                        ProductList updatedList = jsonToProductList(response);
+                        return new ApiResponse<>(updatedList, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "Add product to list error", e);
-                    return new ApiResponse<>(e.getMessage());
+                    return new ApiResponse<>(null, e.getMessage(), false);
                 }
             }
-
-            @Override
-            protected void onPostExecute(ApiResponse<ProductList> result) {
-                future.complete(result);
-            }
-        }.execute();
-
-        return future;
+        });
     }
 
-    public CompletableFuture<ApiResponse<ProductList>> copyList(String listId, String newName) {
-        CompletableFuture<ApiResponse<ProductList>> future = new CompletableFuture<>();
+    public Future<ApiResponse<ProductList>> copyList(String listId, String newName) {
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("nom", newName);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-        new AsyncTask<Void, Void, ApiResponse<ProductList>>() {
+        return executorService.submit(new Callable<ApiResponse<ProductList>>() {
             @Override
-            protected ApiResponse<ProductList> doInBackground(Void... voids) {
+            public ApiResponse<ProductList> call() {
                 try {
-                    JSONObject jsonBody = new JSONObject();
-                    jsonBody.put("nom", newName);
+                    HttpURLConnection connection = createConnection("/listes/" + listId + "/copier", "POST", true);
+                    writeBody(connection, jsonBody.toString());
 
-                    String token = sessionManager.getAuthToken();
-                    String jsonResponse = performRequest(BASE_URL + "/listes/" + listId + "/copier",
-                            "POST", jsonBody.toString(), token);
-
-                    JSONObject jsonList = new JSONObject(jsonResponse);
-                    ProductList copiedList = new ProductList();
-                    copiedList.setId(jsonList.getString("_id"));
-                    copiedList.setNom(jsonList.getString("nom"));
-
-                    if (jsonList.has("description") && !jsonList.isNull("description")) {
-                        copiedList.setDescription(jsonList.getString("description"));
+                    if (connection.getResponseCode() == 201) {
+                        JSONObject response = new JSONObject(readResponse(connection));
+                        ProductList copiedList = jsonToProductList(response);
+                        return new ApiResponse<>(copiedList, null, true);
+                    } else {
+                        String errorMessage = readErrorResponse(connection);
+                        return new ApiResponse<>(null, errorMessage, false);
                     }
-
-                    return new ApiResponse<>(copiedList);
                 } catch (Exception e) {
                     Log.e(TAG, "Copy list error", e);
-                    return new ApiResponse<>(e.getMessage());
+                    return new ApiResponse<>(null, e.getMessage(), false);
                 }
             }
-
-            @Override
-            protected void onPostExecute(ApiResponse<ProductList> result) {
-                future.complete(result);
-            }
-        }.execute();
-
-        return future;
+        });
     }
 
-    // HTTP request helper
-    private String performRequest(String urlStr, String method, String jsonBody, String token) throws IOException, JSONException {
-        URL url = new URL(urlStr);
+    // Helper methods
+    private HttpURLConnection createConnection(String endpoint, String method, boolean requireAuth) throws IOException {
+        URL url = new URL(BASE_URL + endpoint);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(method);
         connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Accept", "application/json");
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(15000);
 
-        if (token != null && !token.isEmpty()) {
-            connection.setRequestProperty("Authorization", "Bearer " + token);
+        if (requireAuth && sessionManager.getToken() != null) {
+            connection.setRequestProperty("Authorization", "Bearer " + sessionManager.getToken());
         }
 
-        // For POST/PUT requests
-        if (jsonBody != null) {
+        if (method.equals("POST") || method.equals("PUT")) {
             connection.setDoOutput(true);
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonBody.getBytes("utf-8");
-                os.write(input, 0, input.length);
-            }
         }
 
-        // Read the response
-        StringBuilder response = new StringBuilder();
-        int responseCode = connection.getResponseCode();
+        return connection;
+    }
 
-        if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-            }
-        } else {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getErrorStream(), "utf-8"))) {
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-            }
+    private void writeBody(HttpURLConnection connection, String body) throws IOException {
+        try (OutputStream os = connection.getOutputStream()) {
+            byte[] input = body.getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+        }
+    }
 
-            // If it's JSON, try to extract error message
-            if (response.length() > 0) {
-                try {
-                    JSONObject errorResponse = new JSONObject(response.toString());
-                    if (errorResponse.has("erreur")) {
-                        throw new IOException(errorResponse.getString("erreur"));
-                    }
-                } catch (JSONException ignored) {
-                    // If not JSON, just use the response as error message
-                }
+    private String readResponse(HttpURLConnection connection) throws IOException {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine);
             }
+            return response.toString();
+        }
+    }
 
-            throw new IOException("HTTP error code: " + responseCode);
+    private String readErrorResponse(HttpURLConnection connection) throws IOException {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine);
+            }
+            JSONObject errorJson = new JSONObject(response.toString());
+            return errorJson.optString("erreur", "Unknown error");
+        } catch (Exception e) {
+            return "Error reading error response: " + e.getMessage();
+        }
+    }
+
+    private JSONObject readJsonResponse(HttpURLConnection connection) throws IOException, JSONException {
+        return new JSONObject(readResponse(connection));
+    }
+
+    private Product jsonToProduct(JSONObject json) throws JSONException {
+        Product product = new Product();
+        product.setId(json.getString("_id"));
+        product.setNom(json.getString("nom"));
+        product.setQuantite(json.getDouble("quantite"));
+        product.setUnite(json.getString("unite"));
+        product.setPrix(json.getDouble("prix"));
+
+        if (json.has("description") && !json.isNull("description")) {
+            product.setDescription(json.getString("description"));
         }
 
-        return response.toString();
+        return product;
+    }
+
+    private ProductList jsonToProductList(JSONObject json) throws JSONException {
+        ProductList list = new ProductList();
+        list.setId(json.getString("_id"));
+        list.setNom(json.getString("nom"));
+
+        if (json.has("description") && !json.isNull("description")) {
+            list.setDescription(json.getString("description"));
+        }
+
+        if (json.has("produits") && !json.isNull("produits")) {
+            JSONArray produitsArray = json.getJSONArray("produits");
+            List<Product> products = new ArrayList<>();
+
+            for (int i = 0; i < produitsArray.length(); i++) {
+                JSONObject produitObject = produitsArray.getJSONObject(i);
+                Product product = new Product();
+
+                if (produitObject.has("produit_id")) {
+                    product.setId(produitObject.getString("produit_id"));
+                }
+
+                product.setNom(produitObject.getString("nom"));
+                product.setQuantite(produitObject.getDouble("quantite"));
+                product.setUnite(produitObject.getString("unite"));
+                product.setPrix(produitObject.getDouble("prix"));
+
+                products.add(product);
+            }
+
+            list.setProduits(products);
+        }
+
+        return list;
+    }
+
+    public void shutdown() {
+        executorService.shutdown();
     }
 }
