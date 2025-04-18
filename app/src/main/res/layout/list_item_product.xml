@@ -56,5 +56,16 @@
             app:layout_constraintTop_toBottomOf="@+id/textViewProductPrice"
             app:layout_constraintBottom_toBottomOf="parent" />
 
+        <ImageButton
+            android:id="@+id/buttonEditProduct"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/edit_product"
+            android:src="@drawable/ic_edit"
+            app:layout_constraintEnd_toStartOf="@+id/buttonDeleteProduct"
+            app:layout_constraintTop_toBottomOf="@+id/textViewProductPrice"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>
