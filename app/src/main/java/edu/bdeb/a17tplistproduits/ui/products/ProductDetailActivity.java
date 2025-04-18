@@ -1,7 +1,9 @@
 package edu.bdeb.a17tplistproduits.ui.products;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -43,6 +45,7 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private String productId;
     private Product currentProduct;
+    private static final int REQUEST_EDIT_PRODUCT = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +80,15 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         buttonAddToList.setOnClickListener(v -> showListSelectionDialog());
     }
+
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.product_detail_menu, menu);
+        return true;
+    }
+
+
+
 
     private void loadProductDetails() {
         progressBar.setVisibility(View.VISIBLE);
@@ -214,12 +226,27 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
+        int id = item.getItemId();
+
+        if (id == android.R.id.home) {
             onBackPressed();
             return true;
+        } else if (id == R.id.action_edit) {
+            openEditProductActivity();
+            return true;
         }
+
         return super.onOptionsItemSelected(item);
+    }
+
+
+    private void openEditProductActivity() {
+        Intent intent = new Intent(this, AddProductActivity.class);
+        intent.putExtra("product_id", productId);
+        intent.putExtra("is_edit_mode", true);
+        startActivityForResult(intent, REQUEST_EDIT_PRODUCT);
     }
 }
