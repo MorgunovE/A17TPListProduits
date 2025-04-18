@@ -117,8 +117,17 @@
 
     <string name="save">Save</string>
     <string name="quantity_updated">Quantity updated</string>
+    <string name="add_product_error">Add product error</string>
+    <string name="update_product">Update</string>
+    <string name="product_updated_success">Product updated successfully</string>
     <string name="update_failed">Update failed</string>
+    <string name="edit_product">edit product</string>
 
-    <string name="add_product_error">add product error</string>
+    <string name="error_loading_product">error loading product</string>
+    <string name="product_price_required">product price required</string>
+    <string name="product_unit_required">product unit required</string>
+    <string name="product_updated">product updated</string>
+    <string name="product_created">product created</string>
+    <string name="creation_failed">creation failed</string>
 
 </resources>
